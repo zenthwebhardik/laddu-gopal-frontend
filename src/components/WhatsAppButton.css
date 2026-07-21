@@ -1,0 +1,36 @@
+.whatsapp-3d-container {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  width: 70px;
+  height: 70px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.whatsapp-overlay-btn {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  border-radius: 50%;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.whatsapp-overlay-btn svg {
+  filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));
+}
+
+@media (max-width: 768px) {
+  .whatsapp-3d-container {
+    bottom: 16px;
+    left: 16px;
+    width: 60px;
+    height: 60px;
+  }
+}
