@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { Link, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
-import AuthModal from './AuthModal.jsx';
 
 const navItems = [
   { path: '#services', label: 'Services' },
@@ -14,12 +12,22 @@ const navItems = [
 
 export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
-  const { user, logout } = useAuth();
-  const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [subnavVisible, setSubnavVisible] = useState(false);
   const [userCount, setUserCount] = useState(null);
+
+  useEffect(() => {
+    let timeoutId;
+    if (subnavVisible) {
+      timeoutId = setTimeout(() => {
+        setSubnavVisible(false);
+      }, 5000);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [subnavVisible]);
 
   useEffect(() => {
     fetch('http://localhost:8000/api/v1/stats/unique-users')
@@ -70,7 +78,15 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className={`navbar ${scrolled ? 'scrolled' : ''}`} id="main-nav">
+      <nav 
+        className={`navbar ${scrolled ? 'scrolled' : ''}`} 
+        id="main-nav"
+        onClick={() => {
+          if (window.innerWidth <= 768) {
+            setSubnavVisible(true);
+          }
+        }}
+      >
         <div className="container" style={{ justifyContent: 'space-between' }}>
           
           <div className="nav-brand-group" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginRight: '32px' }}>
@@ -85,13 +101,7 @@ export default function Navbar() {
                 position: 'relative',
                 overflow: 'hidden'
               }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="none">
-                  {/* Elegant Mor Pankh Icon */}
-                  <path d="M 22 2 Q 10 2 2 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M 21 3 C 21 9, 15 15, 9 15 C 13 15, 21 11, 21 3 Z" fill="currentColor" opacity="0.8" />
-                  <circle cx="15" cy="9" r="2.5" fill="var(--bg-primary)" />
-                  <circle cx="15" cy="9" r="1" fill="currentColor" />
-                </svg>
+                <img src="/logo.png" alt="Laddu Gopal Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 50%)', pointerEvents: 'none' }}></div>
               </div>
               <span className="logo-text" style={{
@@ -104,7 +114,7 @@ export default function Navbar() {
                 fontWeight: '800',
                 fontSize: '1.2rem',
                 filter: 'drop-shadow(0 2px 4px rgba(191, 149, 63, 0.2))'
-              }}>LADDU GOPAL</span>
+              }}>LADDU GOPAL ENTERPRISE</span>
             </a>
           </div>
 
@@ -140,16 +150,7 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: 'auto' }}>
-            {user ? (
-              <button className="btn btn-primary nav-auth-btn" onClick={logout} style={{ padding: '8px 16px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
-                Log Out
-              </button>
-            ) : (
-              <button className="btn btn-primary nav-auth-btn" onClick={() => setIsAuthModalOpen(true)} style={{ padding: '8px 16px', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
-                Login / Register
-              </button>
-            )}
+          <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: 'auto', position: 'relative', zIndex: 1002 }}>
             {userCount !== null && (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '4px',
@@ -196,8 +197,24 @@ export default function Navbar() {
           </div>
         </div>
       </nav>
-      
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      {/* Mobile Sub Header (Scrollable) */}
+      <AnimatePresence>
+        {subnavVisible && (
+          <motion.div 
+            className="mobile-sub-nav"
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -20, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <a href="/" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Home</a>
+            <a href="/#services" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Services</a>
+            <a href="/#gate-designs" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Portfolio</a>
+            <a href="/contact" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Contact Us</a>
+            <a href="/support" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Support</a>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

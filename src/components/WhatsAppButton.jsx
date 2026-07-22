@@ -46,7 +46,7 @@ export default function WhatsAppButton() {
         <Environment preset="city" />
       </Canvas>
       <a
-        href="https://wa.me/1234567890" // Replace with actual number
+        href="https://wa.me/919306958575"
         target="_blank"
         rel="noopener noreferrer"
         className="whatsapp-overlay-btn"

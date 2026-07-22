@@ -4,7 +4,7 @@ import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
 import LavaCursor from './components/LavaCursor.jsx';
-import SplineScene from './components/SplineScene.jsx';
+import ThreeDScene from './components/ThreeDScene.jsx';
 import WhatsAppButton from './components/WhatsAppButton.jsx';
 
 import Home from './pages/Home.jsx';
@@ -24,7 +24,7 @@ export default function App() {
   return (
     <>
       {/* Global Background and Effects */}
-      <SplineScene />
+      <ThreeDScene />
       <LavaCursor />
       <WhatsAppButton />
       

@@ -51,9 +51,9 @@ const issueCategories = [
 ];
 
 const priorityLevels = [
-  { value: 'low', label: '🟢 Low — General inquiry', color: '#22c55e' },
-  { value: 'medium', label: '🟡 Medium — Needs attention', color: '#f59e0b' },
-  { value: 'high', label: '🔴 High — Urgent issue', color: '#ef4444' },
+  { value: 'low', label: 'Low — General inquiry', color: '#22c55e' },
+  { value: 'medium', label: 'Medium — Needs attention', color: '#f59e0b' },
+  { value: 'high', label: 'High — Urgent issue', color: '#ef4444' },
 ];
 
 const initialTicket = {

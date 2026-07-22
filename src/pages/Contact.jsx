@@ -6,11 +6,13 @@ import SparkParticles from '../components/SparkParticles.jsx';
 import { validateField } from '../utils/validators.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
+import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+
 const contactInfo = [
-  { icon: '📍', title: 'Visit Us', text: 'Industrial Area, Phase-II, Plot 47\nChandigarh, India — 160002' },
-  { icon: '📞', title: 'Call Us', text: '+91 98765 43210\n+91 87654 32109' },
-  { icon: '✉️', title: 'Email Us', text: 'info@laddugopalwelding.com\nquotes@laddugopalwelding.com' },
-  { icon: '🕐', title: 'Working Hours', text: 'Mon — Sat: 8:00 AM – 7:00 PM\nSun: Emergency Only' },
+  { icon: <MapPin size={24} />, title: 'Visit Us', text: 'Laddu Gopal Enterprise, Near Balaji Dharam Kanta, Ram Nagar Street No. 3, Jatal Road, Panipat, Haryana 132105' },
+  { icon: <Phone size={24} />, title: 'Call Us', text: '+91 93069 58575\n+91 98765 43210' },
+  { icon: <Mail size={24} />, title: 'Email Us', text: 'info@laddugopalwelding.com\nquotes@laddugopalwelding.com' },
+  { icon: <Clock size={24} />, title: 'Working Hours', text: 'Mon — Sat: 8:00 AM – 7:00 PM\nSun: Emergency Only' },
 ];
 
 const initialForm = {
@@ -196,7 +198,7 @@ export default function Contact() {
                   }}
                 >
                   <iframe 
-                    src="https://maps.google.com/maps?q=Industrial+Area,+Phase-II,+Plot+47,+Chandigarh,+India+-+160002&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+                    src="https://maps.google.com/maps?q=Laddu+Gopal+Enterprise,+Near+Balaji+Dharam+Kanta,+Panipat&t=&z=15&ie=UTF8&iwloc=&output=embed" 
                     width="100%" 
                     height="100%" 
                     style={{ border: 0, flex: 1 }} 
@@ -207,13 +209,13 @@ export default function Contact() {
                   ></iframe>
                   <div style={{ padding: '16px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-primary)', display: 'flex', justifyContent: 'center' }}>
                     <a 
-                      href="https://maps.app.goo.gl/hZzUkRUiQYWtm47P6" 
+                      href="https://maps.app.goo.gl/MDbgHCU9Udf7Pqq18" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="btn btn-primary"
-                      style={{ padding: '8px 24px', fontSize: '0.9rem', width: '100%' }}
+                      style={{ padding: '8px 24px', fontSize: '0.9rem', width: '100%', display: 'flex', justifyContent: 'center', gap: '8px' }}
                     >
-                      📍 Get Directions
+                      <MapPin size={18} /> Get Directions
                     </a>
                   </div>
                 </div>

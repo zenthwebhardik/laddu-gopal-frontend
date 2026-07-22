@@ -21,12 +21,7 @@ export default function Footer() {
             
             <Link to="/" className="nav-logo" id="footer-logo" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none' }}>
               <div style={{ width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="none">
-                  <path d="M 22 2 Q 10 2 2 22" stroke="#bf953f" strokeWidth="1.5" strokeLinecap="round" />
-                  <path d="M 21 3 C 21 9, 15 15, 9 15 C 13 15, 21 11, 21 3 Z" fill="#bf953f" opacity="0.8" />
-                  <circle cx="15" cy="9" r="2.5" fill="var(--bg-primary)" />
-                  <circle cx="15" cy="9" r="1" fill="#bf953f" />
-                </svg>
+                <img src="/logo.png" alt="Laddu Gopal Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
               <span style={{
                 fontFamily: '"Cinzel", "Playfair Display", serif',
@@ -38,7 +33,7 @@ export default function Footer() {
                 fontWeight: '800',
                 fontSize: '1.2rem',
                 filter: 'drop-shadow(0 2px 4px rgba(191, 149, 63, 0.2))'
-              }}>LADDU GOPAL</span>
+              }}>LADDU GOPAL ENTERPRISE</span>
             </Link>
             <p style={{ marginTop: '16px', color: 'var(--text-secondary)', lineHeight: '1.6', position: 'relative', zIndex: 1 }}>
               Premium welding services delivering precision, strength, and reliability.
@@ -67,12 +62,12 @@ export default function Footer() {
             <h4>Contact</h4>
             <a href="tel:+919876543210">+91 98765 43210</a>
             <a href="mailto:info@laddugopalwelding.com">info@laddugopalwelding.com</a>
-            <a>Industrial Area, Phase-II, Chandigarh</a>
+            <a>Near Balaji Dharam Kanta, Ram Nagar Street No. 3, Jatal Road, Panipat</a>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <span>&copy; {year} Laddu Gopal Welding. All rights reserved.</span>
+          <span>&copy; {year} Laddu Gopal Enterprise. All rights reserved.</span>
           <div className="footer-socials" style={{ padding: 0, display: 'flex', gap: '16px', alignItems: 'center' }}>
             <a href="#" className="social-icon-link" aria-label="Instagram">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
