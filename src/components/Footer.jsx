@@ -68,6 +68,10 @@ export default function Footer() {
 
         <div className="footer-bottom">
           <span>&copy; {year} Laddu Gopal Enterprise. All rights reserved.</span>
+          <div className="footer-policy-links">
+            <Link to="/privacy">Privacy Policy</Link>
+            <Link to="/terms">Terms of Service</Link>
+          </div>
           <div className="footer-socials" style={{ padding: 0, display: 'flex', gap: '16px', alignItems: 'center' }}>
             <a href="#" className="social-icon-link" aria-label="Instagram">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

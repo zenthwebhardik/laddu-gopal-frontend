@@ -6,6 +6,8 @@ import { Link, useLocation } from 'react-router-dom';
 const navItems = [
   { path: '#services', label: 'Services' },
   { path: '#portfolio', label: 'Portfolio' },
+  { path: '#gate-designs', label: 'Gates' },
+  { path: '#videos', label: 'Videos' },
   { path: '#contact', label: 'Contact' },
   { path: '#support', label: 'Support' },
 ];
@@ -16,6 +18,8 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [subnavVisible, setSubnavVisible] = useState(false);
   const [userCount, setUserCount] = useState(null);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     let timeoutId;
@@ -39,13 +43,50 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState('hero');
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
+    let hideTimeout;
+
+    const resetTimer = () => {
+      if (hideTimeout) clearTimeout(hideTimeout);
+      if (window.scrollY > 100) {
+        hideTimeout = setTimeout(() => {
+          if (!mobileOpen && !subnavVisible) {
+            setIsVisible(false);
+          }
+        }, 5000);
+      }
     };
-    
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setScrolled(currentScrollY > 50);
+
+      if (currentScrollY < lastScrollY || currentScrollY < 100) {
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100 && !mobileOpen && !subnavVisible) {
+        setIsVisible(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+      resetTimer();
+    };
+
+    const handleMouseMove = (e) => {
+      if (e.clientY < 100) {
+        setIsVisible(true);
+      }
+      resetTimer();
+    };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    window.addEventListener('mousemove', handleMouseMove);
+    resetTimer();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (hideTimeout) clearTimeout(hideTimeout);
+    };
+  }, [lastScrollY, mobileOpen, subnavVisible]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -78,9 +119,12 @@ export default function Navbar() {
 
   return (
     <>
-      <nav 
+      <motion.nav 
         className={`navbar ${scrolled ? 'scrolled' : ''}`} 
         id="main-nav"
+        initial={{ y: 0 }}
+        animate={{ y: isVisible ? 0 : "-100%" }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
         onClick={() => {
           if (window.innerWidth <= 768) {
             setSubnavVisible(true);
@@ -112,7 +156,8 @@ export default function Navbar() {
                 textTransform: 'uppercase',
                 letterSpacing: '2px',
                 fontWeight: '800',
-                fontSize: '1.2rem',
+                fontSize: 'clamp(0.9rem, 4vw, 1.2rem)',
+                whiteSpace: 'nowrap',
                 filter: 'drop-shadow(0 2px 4px rgba(191, 149, 63, 0.2))'
               }}>LADDU GOPAL ENTERPRISE</span>
             </a>
@@ -150,18 +195,16 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: 'auto', position: 'relative', zIndex: 1002 }}>
+          <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', position: 'relative', zIndex: 1002 }}>
             {userCount !== null && (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '4px',
-                padding: '4px 10px', borderRadius: '20px',
-                background: 'linear-gradient(135deg, rgba(191,149,63,0.15), rgba(191,149,63,0.05))',
-                border: '1px solid rgba(191,149,63,0.2)',
+                padding: '4px 8px', borderRadius: '4px',
+                background: 'transparent',
                 fontSize: '0.75rem', fontWeight: '600',
-                color: '#bf953f', whiteSpace: 'nowrap',
+                color: 'var(--text-secondary)', whiteSpace: 'nowrap',
               }}>
-                <span>👥</span>
-                <span>{userCount.toLocaleString()}</span>
+                <span>👥 {userCount.toLocaleString()}</span>
               </div>
             )}
             <button
@@ -169,6 +212,12 @@ export default function Navbar() {
               onClick={toggleTheme}
               aria-label="Toggle theme"
               id="theme-toggle"
+              style={{
+                background: 'transparent', border: 'none', padding: '6px', cursor: 'pointer',
+                color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
             >
               <AnimatePresence mode="wait">
                 <motion.span
@@ -196,7 +245,7 @@ export default function Navbar() {
             </button>
           </div>
         </div>
-      </nav>
+      </motion.nav>
       {/* Mobile Sub Header (Scrollable) */}
       <AnimatePresence>
         {subnavVisible && (
@@ -209,9 +258,11 @@ export default function Navbar() {
           >
             <a href="/" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Home</a>
             <a href="/#services" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Services</a>
-            <a href="/#gate-designs" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Portfolio</a>
-            <a href="/contact" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Contact Us</a>
-            <a href="/support" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Support</a>
+            <a href="/#portfolio" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Portfolio</a>
+            <a href="/#gate-designs" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Gates</a>
+            <a href="/#videos" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Videos</a>
+            <a href="/#contact" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Contact Us</a>
+            <a href="/#support" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Support</a>
           </motion.div>
         )}
       </AnimatePresence>

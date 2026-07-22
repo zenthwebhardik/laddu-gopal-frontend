@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Flame, Shield, Settings, Wrench, Building2, Trophy, Truck, Microscope, Clock, MessageSquare, PenTool, CheckCircle, Factory, Droplet, Home as HomeIcon } from 'lucide-react';
+import { Zap, Flame, Shield, Settings, Wrench, Building2, Trophy, Truck, Microscope, Clock, MessageSquare, PenTool, CheckCircle, Factory, Droplet, Home as HomeIcon, Play } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal.jsx';
 import SparkParticles from '../components/SparkParticles.jsx';
 import { useMagnetic } from '../hooks/useMagnetic.js';
@@ -103,11 +103,12 @@ function Marquee() {
 }
 
 /* ─── Home Page ─────────────────────────────────────────────── */
-export default function Home() {
+export default function Home({ onOpenQuote }) {
   const magneticPrimary   = useMagnetic(0.3);
   const magneticSecondary = useMagnetic(0.2);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [selectedGate, setSelectedGate] = useState(null);
+  const videoRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -165,9 +166,7 @@ export default function Home() {
             <div className="hero-cta" id="hero-cta">
               <button
                 onClick={() => {
-                  const el = document.getElementById('cta-section');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  else window.location.href = '/contact';
+                  if (onOpenQuote) onOpenQuote();
                 }}
                 className="btn btn-primary btn-magnetic"
                 id="hero-cta-primary"
@@ -222,7 +221,7 @@ export default function Home() {
       <section className="section" id="about" style={{ position: 'relative', overflow: 'hidden' }}>
         <div className="hero-orb hero-orb-2" style={{ top: '20%', left: '-10%', opacity: 0.3 }} />
         <div className="container">
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-2xl)', alignItems: 'center' }}>
+          <div className="two-column-grid">
             <ScrollReveal direction="left">
               <span className="section-label">Our Heritage</span>
               <h2 className="section-title">
@@ -331,9 +330,30 @@ export default function Home() {
               transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
               className="features-3d-wrapper" 
               id="features-3d" 
-              style={{ position: 'relative', borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--border-primary)', boxShadow: '0 0 40px rgba(191, 149, 63, 0.15)' }}
+              style={{ position: 'relative', borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--border-primary)', boxShadow: '0 0 40px rgba(191, 149, 63, 0.15)', cursor: 'pointer' }}
+              onMouseEnter={() => { if (window.innerWidth > 768 && videoRef.current) videoRef.current.play(); }}
+              onMouseLeave={() => { if (window.innerWidth > 768 && videoRef.current) videoRef.current.pause(); }}
+              onClick={() => { 
+                if (window.innerWidth <= 768 && videoRef.current) {
+                  if (videoRef.current.paused) videoRef.current.play();
+                  else videoRef.current.pause();
+                }
+              }}
             >
-              <WeldingSparkCanvas />
+              <video 
+                ref={videoRef}
+                src="https://www.w3schools.com/html/mov_bbb.mp4" 
+                loop 
+                muted 
+                playsInline
+                poster="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', background: 'rgba(0,0,0,0.2)' }}>
+                <div style={{ padding: '20px', borderRadius: '50%', background: 'var(--accent-gradient)', color: '#fff', boxShadow: '0 4px 15px var(--accent-glow)' }} className="play-icon-mobile hide-on-desktop">
+                  <Play size={32} />
+                </div>
+              </div>
             </motion.div>
 
             <motion.div 
@@ -532,9 +552,13 @@ export default function Home() {
                   flexWrap: 'wrap',
                 }}
               >
-                <Link to="/contact" className="btn btn-primary" id="cta-contact">
+                <button 
+                  onClick={() => { if (onOpenQuote) onOpenQuote(); }} 
+                  className="btn btn-primary" 
+                  id="cta-contact"
+                >
                   Request a Quote →
-                </Link>
+                </button>
                 <Link to="/support" className="btn btn-secondary" id="cta-support">
                   Need Help?
                 </Link>

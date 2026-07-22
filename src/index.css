@@ -1244,9 +1244,23 @@ h1, h2, h3, h4, h5, h6 {
 
 .footer-grid {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
   gap: var(--space-3xl);
   margin-bottom: var(--space-3xl);
+}
+
+.footer-brand {
+  grid-column: 1 / -1;
+  max-width: 400px;
+}
+
+@media (min-width: 1024px) {
+  .footer-grid {
+    grid-template-columns: 2fr 1fr 1fr 1fr;
+  }
+  .footer-brand {
+    grid-column: auto;
+  }
 }
 
 .footer-brand p {
@@ -1282,10 +1296,29 @@ h1, h2, h3, h4, h5, h6 {
   padding-top: var(--space-xl);
   border-top: 1px solid var(--border-secondary);
   display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
   justify-content: space-between;
   align-items: center;
   font-size: 0.85rem;
   color: var(--text-tertiary);
+}
+
+.footer-policy-links {
+  display: flex;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+}
+
+.footer-policy-links a {
+  color: var(--text-tertiary);
+  transition: color var(--transition-fast);
+}
+
+.footer-policy-links a:hover {
+  color: var(--accent-primary);
 }
 
 .footer-socials {
@@ -1589,18 +1622,9 @@ h1, h2, h3, h4, h5, h6 {
     grid-template-columns: 1fr;
   }
 
-  .footer-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-  }
-
-  .footer-brand, .footer-column:last-child {
-    grid-column: span 2;
-  }
-
   .footer-bottom {
     flex-direction: column;
-    gap: var(--space-md);
+    gap: var(--space-lg);
     text-align: center;
   }
 
@@ -1622,6 +1646,13 @@ h1, h2, h3, h4, h5, h6 {
 .mx-auto { margin-left: auto; margin-right: auto; }
 .relative { position: relative; }
 .overflow-hidden { overflow: hidden; }
+
+.two-column-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2xl);
+  align-items: center;
+}
 
 @media (max-width: 768px) {
   .heritage-desc {
@@ -2108,6 +2139,26 @@ h1, h2, h3, h4, h5, h6 {
   }
   .portfolio-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .glass-card {
+    padding: var(--space-lg);
+  }
+  .section-title {
+    font-size: clamp(1.8rem, 8vw, 2.5rem);
+  }
+  .section {
+    padding: clamp(2.5rem, 6vw, 4rem) 0;
+  }
+  .two-column-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .step-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.75rem;
+  }
+  .stepper {
+    gap: var(--space-sm);
   }
 }
 
