@@ -1,0 +1,17 @@
+{
+  "name": "Laddu Gopal Enterprise",
+  "short_name": "LG Enterprise",
+  "description": "Premium welding and fabrication services in Panipat.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "icons": [
+    {
+      "src": "/app_icon.png",
+      "type": "image/png",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}
