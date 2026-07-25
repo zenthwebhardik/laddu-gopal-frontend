@@ -5,7 +5,8 @@ import { Link, useLocation } from 'react-router-dom';
 
 const navItems = [
   { path: '#services', label: 'Services' },
-  { path: '#portfolio', label: 'Showcase' },
+  { path: '#portfolio', label: 'Portfolio' },
+  { path: '#gate-designs', label: 'Gates' },
   { path: '#videos', label: 'Videos' },
   { path: '#contact', label: 'Contact' },
   { path: '#support', label: 'Support' },
@@ -15,7 +16,22 @@ export default function Navbar() {
   const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [subnavVisible, setSubnavVisible] = useState(false);
   const [userCount, setUserCount] = useState(null);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    let timeoutId;
+    if (subnavVisible) {
+      timeoutId = setTimeout(() => {
+        setSubnavVisible(false);
+      }, 5000);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [subnavVisible]);
 
   useEffect(() => {
     fetch('http://localhost:8000/api/v1/stats/unique-users')
@@ -27,35 +43,50 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState('hero');
 
   useEffect(() => {
-    let lastScroll = window.scrollY;
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-      
-      // Close mobile menu if user scrolls down/up significantly (e.g., > 20px)
-      if (mobileOpen && Math.abs(window.scrollY - lastScroll) > 20) {
-        setMobileOpen(false);
+    let hideTimeout;
+
+    const resetTimer = () => {
+      if (hideTimeout) clearTimeout(hideTimeout);
+      if (window.scrollY > 100) {
+        hideTimeout = setTimeout(() => {
+          if (!mobileOpen && !subnavVisible) {
+            setIsVisible(false);
+          }
+        }, 5000);
       }
-      lastScroll = window.scrollY;
+    };
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      setScrolled(currentScrollY > 50);
+
+      if (currentScrollY < lastScrollY || currentScrollY < 100) {
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100 && !mobileOpen && !subnavVisible) {
+        setIsVisible(false);
+      }
+      
+      setLastScrollY(currentScrollY);
+      resetTimer();
+    };
+
+    const handleMouseMove = (e) => {
+      if (e.clientY < 100) {
+        setIsVisible(true);
+      }
+      resetTimer();
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('mousemove', handleMouseMove);
+    resetTimer();
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (hideTimeout) clearTimeout(hideTimeout);
     };
-  }, [mobileOpen]);
-
-  // Auto-close subnav after 6 seconds of inactivity
-  useEffect(() => {
-    let timeoutId;
-    if (mobileOpen) {
-      timeoutId = setTimeout(() => {
-        setMobileOpen(false);
-      }, 6000);
-    }
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [mobileOpen]);
+  }, [lastScrollY, mobileOpen, subnavVisible]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -77,6 +108,11 @@ export default function Navbar() {
     };
   }, []);
 
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [mobileOpen]);
+
   const handleNavClick = () => {
     setMobileOpen(false);
   };
@@ -87,12 +123,11 @@ export default function Navbar() {
         className={`navbar ${scrolled ? 'scrolled' : ''}`} 
         id="main-nav"
         initial={{ y: 0 }}
-        animate={{ y: 0 }}
+        animate={{ y: isVisible ? 0 : "-100%" }}
         transition={{ duration: 0.4, ease: "easeInOut" }}
-        onClick={(e) => {
-          // Allow toggling when clicking the header background (not links/buttons)
-          if (window.innerWidth <= 768 && !e.target.closest('button') && !e.target.closest('a')) {
-            setMobileOpen(!mobileOpen);
+        onClick={() => {
+          if (window.innerWidth <= 768) {
+            setSubnavVisible(true);
           }
         }}
       >
@@ -143,41 +178,24 @@ export default function Navbar() {
                 className={`nav-link ${activeSection === path.substring(1) ? 'active' : ''}`}
                 id={`nav-link-${label.toLowerCase()}`}
                 onClick={handleNavClick}
-                style={{ border: 'none', background: 'transparent' }}
               >
                 {label}
               </a>
             ))}
             
+            <div className="mobile-only-link" style={{ padding: '16px' }}>
+              <button
+                className="theme-toggle"
+                onClick={toggleTheme}
+                aria-label="Toggle theme"
+                style={{ width: '100%', justifyContent: 'center', padding: '12px' }}
+              >
+                {theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode'}
+              </button>
+            </div>
           </div>
 
           <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', position: 'relative', zIndex: 1002 }}>
-            <div className="header-theme-container desktop-only" style={{ display: 'flex', alignItems: 'center', marginRight: '16px' }}>
-              <button
-                className="theme-toggle-btn"
-                onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
-                aria-label="Toggle theme"
-                style={{
-                  background: 'var(--bg-glass)',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '20px',
-                  padding: '6px 12px',
-                  cursor: 'pointer',
-                  color: 'var(--text-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  backdropFilter: 'blur(10px)',
-                  fontWeight: '600',
-                  fontSize: '0.85rem',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                }}
-              >
-                <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
-                <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
-              </button>
-            </div>
-
             {userCount !== null && (
               <div style={{
                 display: 'flex', alignItems: 'center', gap: '4px',
@@ -189,11 +207,35 @@ export default function Navbar() {
                 <span>👥 {userCount.toLocaleString()}</span>
               </div>
             )}
-
+            <button
+              className="theme-toggle nav-desktop-cta"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              id="theme-toggle"
+              style={{
+                background: 'transparent', border: 'none', padding: '6px', cursor: 'pointer',
+                color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+            >
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={theme}
+                  initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+                  animate={{ rotate: 0, opacity: 1, scale: 1 }}
+                  exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+                  transition={{ duration: 0.2 }}
+                  style={{ display: 'flex' }}
+                >
+                  {theme === 'dark' ? '☀️' : '🌙'}
+                </motion.span>
+              </AnimatePresence>
+            </button>
 
             <button
               className={`mobile-toggle ${mobileOpen ? 'active' : ''}`}
-              onClick={(e) => { e.stopPropagation(); setMobileOpen(!mobileOpen); }}
+              onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Toggle menu"
               id="mobile-toggle"
             >
@@ -206,7 +248,7 @@ export default function Navbar() {
       </motion.nav>
       {/* Mobile Sub Header (Scrollable) */}
       <AnimatePresence>
-        {mobileOpen && (
+        {subnavVisible && (
           <motion.div 
             className="mobile-sub-nav"
             initial={{ y: -20, opacity: 0 }}
@@ -216,34 +258,11 @@ export default function Navbar() {
           >
             <a href="/" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Home</a>
             <a href="/#services" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Services</a>
-            <a href="/#portfolio" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Showcase</a>
+            <a href="/#portfolio" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Portfolio</a>
+            <a href="/#gate-designs" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Gates</a>
             <a href="/#videos" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Videos</a>
             <a href="/#contact" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Contact Us</a>
             <a href="/#support" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Support</a>
-            
-            <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, paddingRight: '16px' }}>
-              <button
-                className="theme-toggle-btn"
-                onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
-                aria-label="Toggle theme"
-                style={{
-                  background: 'var(--bg-glass)',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '20px',
-                  padding: '6px 12px',
-                  cursor: 'pointer',
-                  color: 'var(--text-primary)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontWeight: '600',
-                  fontSize: '0.85rem'
-                }}
-              >
-                <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
-                <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
-              </button>
-            </div>
           </motion.div>
         )}
       </AnimatePresence>

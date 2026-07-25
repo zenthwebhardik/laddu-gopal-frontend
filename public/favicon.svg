@@ -1,0 +1,42 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="featherBase" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#10b981" />
+      <stop offset="40%" stopColor="#059669" />
+      <stop offset="70%" stopColor="#2563eb" />
+      <stop offset="100%" stopColor="#1e3a8a" />
+    </linearGradient>
+    <radialGradient id="eyeOuter" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stopColor="#fbbf24" />
+      <stop offset="70%" stopColor="#d97706" />
+      <stop offset="100%" stopColor="#b45309" />
+    </radialGradient>
+    <radialGradient id="eyeInner" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stopColor="#60a5fa" />
+      <stop offset="60%" stopColor="#1d4ed8" />
+      <stop offset="100%" stopColor="#1e3a8a" />
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Stem -->
+  <path d="M 220 20 Q 140 30 50 230" stroke="#fcd34d" strokeWidth="8" strokeLinecap="round" />
+  
+  <!-- Outer Feather -->
+  <path d="M 210 30 C 210 110, 140 180, 60 180 C 100 180, 200 130, 210 30 Z" fill="url(#featherBase)" opacity="0.9" />
+  <path d="M 210 30 C 130 20, 70 80, 70 160 C 70 120, 120 40, 210 30 Z" fill="url(#featherBase)" opacity="0.9" />
+
+  <!-- The "Eye" of the feather -->
+  <circle cx="150" cy="100" r="30" fill="url(#eyeOuter)" filter="url(#glow)" />
+  <circle cx="150" cy="100" r="18" fill="url(#eyeInner)" />
+  <circle cx="150" cy="100" r="8" fill="#172554" />
+  
+  <!-- Subtle highlight on the eye -->
+  <path d="M 142 92 Q 150 85 158 92" stroke="#93c5fd" strokeWidth="3" strokeLinecap="round" fill="none" />
+</svg>

@@ -2,34 +2,67 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SparkParticles from '../components/SparkParticles.jsx';
 import ScrollReveal from '../components/ScrollReveal.jsx';
-import { Maximize2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Maximize2, ChevronLeft, ChevronRight, Play } from 'lucide-react';
 
 const showcaseData = {
   gates: [
-    { id: 1, title: 'Modern Laser-Cut Steel', img: 'https://images.unsplash.com/photo-1542617757-bb6274431e77?auto=format&fit=crop&w=800&q=80' },
-    { id: 2, title: 'Classic Wrought Iron', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80' },
+    { id: 1, title: 'Motorized Cantilever Gate', img: 'https://images.unsplash.com/photo-1542617757-bb6274431e77?auto=format&fit=crop&w=800&q=80' },
+    { id: 2, title: 'Classic Wrought Iron Gate', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80' },
     { id: 3, title: 'Industrial Sliding Gate', img: 'https://images.unsplash.com/photo-1620152427845-8f6a9e1cb07c?auto=format&fit=crop&w=800&q=80' },
     { id: 4, title: 'Minimalist Entry Frame', img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80' },
     { id: 5, title: 'Ornamental Floral Gate', img: 'https://images.unsplash.com/photo-1599839619722-39751411ea63?auto=format&fit=crop&w=800&q=80' },
-    { id: 6, title: 'Heavy Duty Security Gate', img: 'https://images.unsplash.com/photo-1509391111737-05c083693fb1?auto=format&fit=crop&w=800&q=80' }
+    { id: 6, title: 'Heavy Duty Security Gate', img: 'https://images.unsplash.com/photo-1509391111737-05c083693fb1?auto=format&fit=crop&w=800&q=80' },
+    { id: 7, title: 'Contemporary Steel Gate', img: 'https://images.unsplash.com/photo-1613506161421-3965582f3471?auto=format&fit=crop&w=800&q=80' },
+    { id: 8, title: 'Rustic Ranch Gate', img: 'https://images.unsplash.com/photo-1590211113032-15957d15905f?auto=format&fit=crop&w=800&q=80' },
+    { id: 9, title: 'Automated Track Gate', img: 'https://images.unsplash.com/photo-1534065664188-33e36e78eb58?auto=format&fit=crop&w=800&q=80' },
+    { id: 10, title: 'Modern Privacy Gate', img: 'https://images.unsplash.com/photo-1512411985444-6330033fa4c7?auto=format&fit=crop&w=800&q=80' }
   ],
-  stairs: [
-    { id: 7, title: 'Floating Steel Staircase', img: 'https://images.unsplash.com/photo-1574805799981-d0b81c43235b?auto=format&fit=crop&w=800&q=80' },
-    { id: 8, title: 'Industrial Mesh Railing', img: 'https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?auto=format&fit=crop&w=800&q=80' },
-    { id: 9, title: 'Curved Wrought Iron', img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80' }, // Reusing elegant ironwork
-    { id: 10, title: 'Minimalist Steel Balusters', img: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&w=800&q=80' }
+  grills: [
+    { id: 11, title: 'Wrought Iron Window Guard', img: 'https://images.unsplash.com/photo-1574805799981-d0b81c43235b?auto=format&fit=crop&w=800&q=80' },
+    { id: 12, title: 'Decorative Security Grill', img: 'https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?auto=format&fit=crop&w=800&q=80' },
+    { id: 13, title: 'Modern Balcony Grill', img: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=800&q=80' },
+    { id: 14, title: 'Geometric Window Frame', img: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&w=800&q=80' },
+    { id: 15, title: 'Heavy Iron Protection', img: 'https://images.unsplash.com/photo-1506161421711-b0db43e74b33?auto=format&fit=crop&w=800&q=80' },
+    { id: 16, title: 'Classic Victorian Grill', img: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=800&q=80' },
+    { id: 17, title: 'Minimalist Balustrade', img: 'https://images.unsplash.com/photo-1622396481328-9b1b78cdd9fd?auto=format&fit=crop&w=800&q=80' },
+    { id: 18, title: 'Custom Arched Guard', img: 'https://images.unsplash.com/photo-1617104068361-b5186b1c4b12?auto=format&fit=crop&w=800&q=80' },
+    { id: 19, title: 'Industrial Mesh Cover', img: 'https://images.unsplash.com/photo-1545084931-e406f890e793?auto=format&fit=crop&w=800&q=80' },
+    { id: 20, title: 'Louvered Steel Grill', img: 'https://images.unsplash.com/photo-1599839619722-39751411ea63?auto=format&fit=crop&w=800&q=80' }
   ],
   custom: [
-    { id: 11, title: 'Custom Steel Furniture', img: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=800&q=80' },
-    { id: 12, title: 'Metal Window Frames', img: 'https://images.unsplash.com/photo-1506161421711-b0db43e74b33?auto=format&fit=crop&w=800&q=80' },
-    { id: 13, title: 'Structural Steel Beams', img: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=800&q=80' },
-    { id: 14, title: 'Decorative Wall Panels', img: 'https://images.unsplash.com/photo-1622396481328-9b1b78cdd9fd?auto=format&fit=crop&w=800&q=80' }
+    { id: 21, title: 'Custom Steel Furniture', img: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=800&q=80' },
+    { id: 22, title: 'Structural Steel Beams', img: 'https://images.unsplash.com/photo-1509391111737-05c083693fb1?auto=format&fit=crop&w=800&q=80' },
+    { id: 23, title: 'Floating Staircase', img: 'https://images.unsplash.com/photo-1574805799981-d0b81c43235b?auto=format&fit=crop&w=800&q=80' },
+    { id: 24, title: 'Decorative Wall Panels', img: 'https://images.unsplash.com/photo-1622396481328-9b1b78cdd9fd?auto=format&fit=crop&w=800&q=80' },
+    { id: 25, title: 'Spiral Metal Stairs', img: 'https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?auto=format&fit=crop&w=800&q=80' },
+    { id: 26, title: 'Welded Fire Pit', img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80' },
+    { id: 27, title: 'Plasma Cut Signage', img: 'https://images.unsplash.com/photo-1588880331179-bc9b93a8cb65?auto=format&fit=crop&w=800&q=80' },
+    { id: 28, title: 'Industrial Shelving', img: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=800&q=80' },
+    { id: 29, title: 'Steel Planters', img: 'https://images.unsplash.com/photo-1506161421711-b0db43e74b33?auto=format&fit=crop&w=800&q=80' },
+    { id: 30, title: 'Custom Metal Canopy', img: 'https://images.unsplash.com/photo-1613506161421-3965582f3471?auto=format&fit=crop&w=800&q=80' }
   ]
 };
 
+const allImages = [
+  ...showcaseData.gates.map(img => ({ ...img, category: 'gates' })),
+  ...showcaseData.grills.map(img => ({ ...img, category: 'grills' })),
+  ...showcaseData.custom.map(img => ({ ...img, category: 'custom' }))
+];
+
+const videosData = [
+  { id: 1, title: 'Heavy Gate Fabrication', embed: 'https://www.youtube.com/embed/ScMzIvxBSi4' },
+  { id: 2, title: 'Plasma Cutting Custom Designs', embed: 'https://www.youtube.com/embed/5aLh7e1w_bE' },
+  { id: 3, title: 'Precision TIG Welding', embed: 'https://www.youtube.com/embed/1OZZqL-bEwM' },
+  { id: 4, title: 'Security Grill Assembly', embed: 'https://www.youtube.com/embed/O_uQZ76s8t8' }
+];
+
 export default function Portfolio() {
-  const [activeTab, setActiveTab] = useState('gates');
-  const [activeImage, setActiveImage] = useState(null);
+  const [activeTab, setActiveTab] = useState('all');
+  const [activeImageIndex, setActiveImageIndex] = useState(null);
+
+  const displayImages = activeTab === 'all' 
+    ? allImages 
+    : allImages.filter(img => img.category === activeTab);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -40,22 +73,22 @@ export default function Portfolio() {
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
+    hidden: { opacity: 0, scale: 0.95 },
     show: { 
       opacity: 1, 
-      y: 0,
+      scale: 1,
       transition: { type: "spring", stiffness: 300, damping: 24 }
     }
   };
 
-  const handleScrollLeft = () => {
-    const el = document.getElementById('carousel-' + activeTab);
-    if (el) el.scrollBy({ left: -320, behavior: 'smooth' });
+  const handleNext = (e) => {
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev + 1) % displayImages.length);
   };
 
-  const handleScrollRight = () => {
-    const el = document.getElementById('carousel-' + activeTab);
-    if (el) el.scrollBy({ left: 320, behavior: 'smooth' });
+  const handlePrev = (e) => {
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev - 1 + displayImages.length) % displayImages.length);
   };
 
   return (
@@ -79,130 +112,209 @@ export default function Portfolio() {
       </section>
 
       <div className="container" style={{ zIndex: 2, position: 'relative' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '2rem', flexWrap: 'wrap' }}>
+        {/* Filter Tabs */}
+        <div className="filter-container">
+          <button 
+            className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('all')}
+          >
+            All Projects
+          </button>
           <button 
             className={`tab-btn ${activeTab === 'gates' ? 'active' : ''}`} 
             onClick={() => setActiveTab('gates')}
           >
-            Main Gates
+            Moving & Sliding Gates
           </button>
           <button 
-            className={`tab-btn ${activeTab === 'stairs' ? 'active' : ''}`} 
-            onClick={() => setActiveTab('stairs')}
+            className={`tab-btn ${activeTab === 'grills' ? 'active' : ''}`} 
+            onClick={() => setActiveTab('grills')}
           >
-            Staircase Grills
+            Window & Security Grills
           </button>
           <button 
             className={`tab-btn ${activeTab === 'custom' ? 'active' : ''}`} 
             onClick={() => setActiveTab('custom')}
           >
-            Custom Metalwork
+            Architectural & Custom Metalwork
           </button>
         </div>
 
-        <div style={{ position: 'relative' }}>
-          {/* Navigation Arrows */}
-          <button className="carousel-nav prev" onClick={handleScrollLeft} aria-label="Scroll left">
-            <ChevronLeft />
-          </button>
-          <button className="carousel-nav next" onClick={handleScrollRight} aria-label="Scroll right">
-            <ChevronRight />
-          </button>
-
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial="hidden"
-              animate="show"
-              exit={{ opacity: 0, transition: { duration: 0.2 } }}
-              variants={containerVariants}
-              className="carousel-container"
-              id={`carousel-${activeTab}`}
-            >
-              {showcaseData[activeTab].map((item) => (
-                <motion.div key={item.id} variants={itemVariants} className="carousel-card">
-                  <div 
-                    className="glass-card" 
-                    style={{ padding: '0', overflow: 'hidden', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column' }}
-                    onClick={() => setActiveImage(item)}
-                  >
-                    <div style={{ position: 'relative', height: '250px', width: '100%', overflow: 'hidden' }}>
-                      <img 
-                        src={item.img} 
-                        alt={item.title} 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }} 
-                        className="hover-zoom"
-                      />
-                      <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.3s ease' }} className="hover-reveal-flex">
-                        <div style={{ width: '50px', height: '50px', background: 'var(--accent-gradient)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 15px var(--accent-glow)' }}>
-                          <Maximize2 size={24} />
-                        </div>
+        {/* Portfolio Grid */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial="hidden"
+            animate="show"
+            exit={{ opacity: 0, transition: { duration: 0.2 } }}
+            variants={containerVariants}
+            className="portfolio-grid"
+          >
+            {displayImages.map((item, index) => (
+              <motion.div key={item.id} variants={itemVariants} className="grid-card">
+                <div 
+                  className="glass-card" 
+                  style={{ padding: '0', overflow: 'hidden', cursor: 'pointer', height: '100%', display: 'flex', flexDirection: 'column' }}
+                  onClick={() => setActiveImageIndex(index)}
+                >
+                  <div style={{ position: 'relative', height: '280px', width: '100%', overflow: 'hidden' }}>
+                    <img 
+                      src={item.img} 
+                      alt={item.title} 
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }} 
+                      className="hover-zoom"
+                      loading="lazy"
+                    />
+                    <div className="hover-reveal-flex" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.3s ease' }}>
+                      <div style={{ width: '50px', height: '50px', background: 'var(--accent-gradient)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 15px var(--accent-glow)' }}>
+                        <Maximize2 size={24} />
                       </div>
                     </div>
-                    <div style={{ padding: 'var(--space-md) var(--space-lg)', textAlign: 'center', flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <h3 style={{ fontSize: '1.1rem', marginBottom: 0 }}>{item.title}</h3>
-                    </div>
                   </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </AnimatePresence>
+                  <div className="card-title-container">
+                    <h3 className="card-title">{item.title}</h3>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Video Section */}
+        <div style={{ marginTop: '5rem' }}>
+          <ScrollReveal>
+            <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+              <span className="section-label">Process & Techniques</span>
+              <h2 className="section-title" style={{ fontSize: '2.5rem' }}>
+                Fabrication in <span className="text-gradient">Action</span>
+              </h2>
+              <p className="section-subtitle mx-auto" style={{ maxWidth: '600px' }}>
+                Watch our expert welders and fabricators bring raw metal to life with precision techniques and state-of-the-art equipment.
+              </p>
+            </div>
+          </ScrollReveal>
+          
+          <div className="video-grid">
+            {videosData.map((video) => (
+              <ScrollReveal key={video.id}>
+                <div className="glass-card" style={{ padding: '0', overflow: 'hidden', borderRadius: 'var(--radius-lg)' }}>
+                  <div style={{ position: 'relative', paddingTop: '56.25%', width: '100%' }}>
+                    <iframe 
+                      src={video.embed} 
+                      title={video.title}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                  <div style={{ padding: 'var(--space-md)', background: 'var(--bg-glass)', borderTop: '1px solid var(--border-primary)' }}>
+                    <h3 style={{ fontSize: '1.2rem', marginBottom: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <Play size={18} className="text-accent" /> {video.title}
+                    </h3>
+                  </div>
+                </div>
+              </ScrollReveal>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Lightbox Modal */}
       <AnimatePresence>
-        {activeImage && (
+        {activeImageIndex !== null && (
           <motion.div 
             className="lightbox-overlay"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setActiveImage(null)}
-            style={{ zIndex: 9999, padding: 'var(--space-md)', flexDirection: 'column' }}
+            onClick={() => setActiveImageIndex(null)}
+            style={{ 
+              position: 'fixed', inset: 0, zIndex: 9999, padding: 'var(--space-md)', 
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(0, 0, 0, 0.9)', backdropFilter: 'blur(5px)'
+            }}
           >
-            <div style={{ width: '100%', maxWidth: '900px', display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+            <div style={{ position: 'absolute', top: '20px', right: '20px', zIndex: 10000 }}>
               <button 
-                onClick={() => setActiveImage(null)}
-                style={{ background: 'var(--bg-glass)', border: '1px solid var(--border-primary)', borderRadius: '50%', color: '#fff', width: '40px', height: '40px', fontSize: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', backdropFilter: 'blur(10px)' }}
+                onClick={() => setActiveImageIndex(null)}
+                style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', color: '#fff', width: '44px', height: '44px', fontSize: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s ease' }}
+                className="lightbox-close-btn"
                 aria-label="Close"
               >
                 &times;
               </button>
             </div>
+
+            <button 
+              className="lightbox-nav prev" 
+              onClick={handlePrev}
+              style={{ position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', color: '#fff', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10000, transition: 'all 0.3s ease' }}
+            >
+              <ChevronLeft size={28} />
+            </button>
+            
+            <button 
+              className="lightbox-nav next" 
+              onClick={handleNext}
+              style={{ position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '50%', color: '#fff', width: '50px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10000, transition: 'all 0.3s ease' }}
+            >
+              <ChevronRight size={28} />
+            </button>
+
             <motion.div 
-              className="glass-card"
-              style={{ width: '100%', maxWidth: '900px', padding: 'var(--space-sm)', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
+              style={{ width: '100%', maxWidth: '1000px', padding: '0', display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
               onClick={(e) => e.stopPropagation()}
             >
               <img 
-                src={activeImage.img} 
-                alt={activeImage.title}
-                style={{ width: '100%', maxHeight: '75vh', objectFit: 'contain', borderRadius: 'var(--radius-md)' }}
+                src={displayImages[activeImageIndex].img} 
+                alt={displayImages[activeImageIndex].title}
+                style={{ width: '100%', maxHeight: '80vh', objectFit: 'contain', borderRadius: 'var(--radius-md)', boxShadow: '0 10px 40px rgba(0,0,0,0.5)' }}
               />
-              <h3 style={{ fontSize: '1.4rem', marginTop: 'var(--space-md)', marginBottom: 'var(--space-xs)', textAlign: 'center' }}>{activeImage.title}</h3>
+              <div style={{ marginTop: '1.5rem', textAlign: 'center', background: 'rgba(0,0,0,0.6)', padding: '10px 20px', borderRadius: '30px', backdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <h3 style={{ fontSize: '1.2rem', margin: 0, color: '#fff', fontWeight: 500 }}>
+                  {displayImages[activeImageIndex].title}
+                </h3>
+                <span style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.6)', display: 'block', marginTop: '5px' }}>
+                  {activeImageIndex + 1} of {displayImages.length}
+                </span>
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <style>{`
+        .filter-container {
+          display: flex;
+          justify-content: center;
+          gap: 10px;
+          margin-bottom: 3rem;
+          flex-wrap: wrap;
+        }
+        
         .tab-btn {
-          padding: 10px 24px;
-          border-radius: 30px;
+          padding: 12px 28px;
+          border-radius: 9999px;
           font-weight: 600;
           font-size: 0.95rem;
           background: var(--bg-secondary);
           color: var(--text-secondary);
           border: 1px solid var(--border-primary);
-          transition: all 0.3s ease;
+          transition: all 0.3s ease-in-out;
+          cursor: pointer;
+          min-height: 36px;
         }
         .tab-btn:hover {
           color: var(--text-primary);
           background: var(--bg-glass);
+          transform: translateY(-2px);
+        }
+        .tab-btn:active {
+          transform: scale(0.95);
         }
         .tab-btn.active {
           background: var(--accent-gradient);
@@ -210,65 +322,119 @@ export default function Portfolio() {
           border-color: transparent;
           box-shadow: 0 4px 15px var(--accent-glow);
         }
-        .carousel-container {
-          display: flex;
-          overflow-x: auto;
-          scroll-snap-type: x mandatory;
-          scroll-behavior: smooth;
-          gap: 1.5rem;
-          padding: 1rem 0 2rem 0;
-          -ms-overflow-style: none;
-          scrollbar-width: none;
+        
+        .portfolio-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 2rem;
+          padding: 1rem 0;
         }
-        .carousel-container::-webkit-scrollbar {
-          display: none;
+
+        .video-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 2rem;
         }
-        .carousel-card {
-          flex: 0 0 300px;
-          scroll-snap-align: center;
-        }
-        .carousel-nav {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          z-index: 10;
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
-          background: var(--bg-glass);
-          border: 1px solid var(--border-primary);
-          color: var(--text-primary);
+
+        .card-title-container {
+          padding: var(--space-md) var(--space-lg);
+          text-align: center;
+          flex-grow: 1;
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: pointer;
-          backdrop-filter: blur(10px);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-          transition: all 0.3s ease;
+          background: var(--bg-glass);
         }
-        .carousel-nav:hover {
-          background: var(--accent-gradient);
-          color: #fff;
-          border-color: transparent;
+
+        .card-title {
+          font-size: 1.1rem;
+          margin-bottom: 0;
+          font-weight: 600;
         }
-        .carousel-nav.prev {
-          left: -20px;
-        }
-        .carousel-nav.next {
-          right: -20px;
-        }
-        @media (max-width: 768px) {
-          .carousel-card {
-            flex: 0 0 85vw;
+        
+        @media (max-width: 1024px) {
+          .portfolio-grid {
+            grid-template-columns: repeat(2, 1fr);
           }
-          .carousel-nav {
+        }
+        
+        @media (max-width: 768px) {
+          .filter-container {
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            padding: 0 10px 10px 10px;
+            margin-left: -10px;
+            margin-right: -10px;
+          }
+          .filter-container::-webkit-scrollbar {
             display: none;
           }
+          .tab-btn {
+            padding: 8px 18px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+          }
+          .portfolio-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+          }
+          .video-grid {
+            grid-template-columns: 1fr;
+          }
+          .lightbox-nav {
+            top: auto !important;
+            bottom: 20px !important;
+            transform: none !important;
+          }
+          .lightbox-nav.prev {
+            left: 30% !important;
+          }
+          .lightbox-nav.next {
+            right: 30% !important;
+          }
+          .card-title-container {
+            padding: 12px 10px;
+          }
+          .card-title {
+            font-size: 0.9rem;
+          }
         }
+
+        @media (max-width: 640px) {
+          .portfolio-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+          }
+          .card-title-container {
+            padding: 8px 6px;
+          }
+          .card-title {
+            font-size: 0.75rem;
+          }
+        }
+        
         .hover-zoom { transform: scale(1); }
-        .glass-card:hover .hover-zoom { transform: scale(1.05); }
+        .glass-card:hover .hover-zoom { transform: scale(1.08); }
         .hover-reveal-flex { opacity: 0 !important; }
         .glass-card:hover .hover-reveal-flex { opacity: 1 !important; }
+        
+        .lightbox-close-btn:hover, .lightbox-nav:hover {
+          background: var(--accent-gradient) !important;
+          border-color: transparent !important;
+          transform: scale(1.1) !important;
+        }
+        
+        .lightbox-nav {
+          transform: translateY(-50%) scale(1);
+        }
+        
+        .text-accent {
+          color: #f97316; /* Primary accent color */
+        }
       `}</style>
     </section>
   );
