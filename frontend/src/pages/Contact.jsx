@@ -76,6 +76,36 @@ export default function Contact() {
     setErrors((prev) => ({ ...prev, [field]: result.valid ? '' : result.error }));
   }, [form]);
 
+  // ── Geolocation helper ──────────────────────────────────
+  const getGeolocation = () => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve({ latitude: null, longitude: null, location_name: null });
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          let locationName = null;
+          try {
+            const geoRes = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=14`,
+              { headers: { 'Accept-Language': 'en' } }
+            );
+            const geoData = await geoRes.json();
+            const addr = geoData.address || {};
+            locationName = [addr.suburb, addr.city || addr.town || addr.village, addr.state]
+              .filter(Boolean).join(', ') || geoData.display_name?.substring(0, 200) || null;
+          } catch { /* reverse geocode failed — that's fine */ }
+          resolve({ latitude: lat, longitude: lng, location_name: locationName });
+        },
+        () => resolve({ latitude: null, longitude: null, location_name: null }),
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
+      );
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitError(null);
@@ -109,6 +139,9 @@ export default function Contact() {
 
     setSubmitting(true);
     try {
+      // Capture geolocation before sending
+      const geo = await getGeolocation();
+
       const res = await fetch(`${API_BASE || 'http://localhost:8000/api/v1'}/contact`, {
         method: 'POST',
         headers: {
@@ -121,7 +154,10 @@ export default function Contact() {
           email: form.email,
           phone: form.phone,
           subject: form.subject,
-          message: form.message
+          message: form.message,
+          latitude: geo.latitude,
+          longitude: geo.longitude,
+          location_name: geo.location_name,
         }),
       });
 

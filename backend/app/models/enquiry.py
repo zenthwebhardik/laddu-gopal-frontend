@@ -2,7 +2,7 @@
 Enquiry models — form submissions that trigger PDF + WhatsApp.
 """
 
-from datetime import datetime
+from typing import Optional
 from pydantic import BaseModel, Field
 
 from ..validators import GmailOnly, IndianPhone
@@ -15,9 +15,9 @@ class EnquiryCreate(BaseModel):
     email: GmailOnly
     service: str = Field(..., min_length=2, max_length=100)
     message: str = Field(..., min_length=5, max_length=2000)
-
-
-
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    location_name: Optional[str] = Field(None, max_length=300)
 
 
 class EnquiryResponse(BaseModel):

@@ -20,6 +20,7 @@ from sqlalchemy import text
 from .config import settings
 from .database import engine, get_db, Base  # 1. Import Base here
 from .routers import auth, enquiries, contact, comments, stats
+from .routers import visitors, admin
 
 # 2. Import all models here so Base registers their schemas before table creation
 from app import models  # Adjust if your models are structured differently (e.g., from . import models)
@@ -36,10 +37,10 @@ logger = logging.getLogger("laddu-gopal")
 limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 
 
-# ── Lifespan: connect/disconnect PostgreSQL ─────────────────
+# ── Lifespan: connect/disconnect PostgreSQL + Scheduler ─────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Manage SQLAlchemy engine lifecycle and auto-create tables."""
+    """Manage SQLAlchemy engine lifecycle, auto-create tables, and start scheduler."""
     logger.info(f"Connecting to PostgreSQL: {settings.database_url}")
     try:
         async with engine.begin() as conn:
@@ -53,7 +54,23 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to connect to PostgreSQL or create tables: {e}")
 
+    # Start the weekly report scheduler
+    scheduler = None
+    try:
+        from .scheduler import start_scheduler
+        scheduler = start_scheduler()
+        logger.info("✅ Weekly report scheduler started.")
+    except Exception as e:
+        logger.warning(f"Scheduler failed to start (non-critical): {e}")
+
     yield
+
+    # Shutdown scheduler
+    if scheduler:
+        try:
+            scheduler.shutdown(wait=False)
+        except Exception:
+            pass
 
     await engine.dispose()
     logger.info("PostgreSQL connection closed.")
@@ -62,8 +79,8 @@ async def lifespan(app: FastAPI):
 # ── FastAPI App ─────────────────────────────────────────────
 app = FastAPI(
     title="Laddu Gopal Welding API",
-    description="Backend API for premium welding services — Auth, Enquiries, Contact, Reviews.",
-    version="1.0.0",
+    description="Backend API for premium welding services — Auth, Enquiries, Contact, Reviews, Admin Dashboard.",
+    version="2.0.0",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -104,6 +121,8 @@ app.include_router(enquiries.router, prefix=API_PREFIX)
 app.include_router(contact.router, prefix=API_PREFIX)
 app.include_router(comments.router, prefix=API_PREFIX)
 app.include_router(stats.router, prefix=API_PREFIX)
+app.include_router(visitors.router, prefix=API_PREFIX)
+app.include_router(admin.router, prefix=API_PREFIX)
 
 
 # ── Health Check ────────────────────────────────────────────
@@ -113,7 +132,7 @@ async def health_check():
     return {
         "status": "healthy",
         "service": "Laddu Gopal Welding API",
-        "version": "1.0.0",
+        "version": "2.0.0",
     }
 
 
@@ -135,5 +154,7 @@ async def api_health(db: AsyncSession = Depends(get_db)):
             "contact": "/api/v1/contact",
             "comments": "/api/v1/comments",
             "stats": "/api/v1/stats",
+            "visitors": "/api/v1/visitors",
+            "admin": "/api/v1/admin",
         },
     }

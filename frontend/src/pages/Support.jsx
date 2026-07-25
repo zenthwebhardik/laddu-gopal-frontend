@@ -153,9 +153,42 @@ export default function Support() {
 
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 0));
 
+  // ── Geolocation helper ──────────────────────────────────
+  const getGeolocation = () => {
+    return new Promise((resolve) => {
+      if (!navigator.geolocation) {
+        resolve({ latitude: null, longitude: null, location_name: null });
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          let locationName = null;
+          try {
+            const geoRes = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=14`,
+              { headers: { 'Accept-Language': 'en' } }
+            );
+            const geoData = await geoRes.json();
+            const addr = geoData.address || {};
+            locationName = [addr.suburb, addr.city || addr.town || addr.village, addr.state]
+              .filter(Boolean).join(', ') || geoData.display_name?.substring(0, 200) || null;
+          } catch { /* reverse geocode failed — that's fine */ }
+          resolve({ latitude: lat, longitude: lng, location_name: locationName });
+        },
+        () => resolve({ latitude: null, longitude: null, location_name: null }),
+        { enableHighAccuracy: false, timeout: 5000, maximumAge: 300000 }
+      );
+    });
+  };
+
   const handleSubmitTicket = async () => {
     setSubmitting(true);
     setSubmitError(null);
+
+    // Capture geolocation before sending
+    const geo = await getGeolocation();
 
     const backendPayload = {
       name: ticket.name,
@@ -163,6 +196,9 @@ export default function Support() {
       email: ticket.email,
       service: ticket.category || 'General Inquiry',
       message: `Priority: ${ticket.priority}\nSubject: ${ticket.subject}\n\n${ticket.description}`,
+      latitude: geo.latitude,
+      longitude: geo.longitude,
+      location_name: geo.location_name,
     };
 
     try {

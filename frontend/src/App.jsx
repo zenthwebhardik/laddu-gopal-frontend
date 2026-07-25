@@ -13,7 +13,10 @@ import Portfolio from './pages/Portfolio.jsx';
 import Contact from './pages/Contact.jsx';
 import Support from './pages/Support.jsx';
 import Videos from './pages/Videos.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
 import QuoteModal from './components/QuoteModal.jsx';
+
+const API_BASE = 'http://localhost:8000/api/v1';
 
 export default function App() {
   const { pathname } = useLocation();
@@ -22,6 +25,15 @@ export default function App() {
   // Scroll to top on route change
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [pathname]);
+
+  // Track site visitor on mount / location change
+  useEffect(() => {
+    fetch(`${API_BASE}/visitors/track`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: pathname }),
+    }).catch(() => {});
   }, [pathname]);
 
   return (
@@ -41,6 +53,7 @@ export default function App() {
           <Videos />
           <Contact />
           <Support />
+          <AdminDashboard />
         </main>
         <Footer />
         <ScrollToTop />

@@ -9,6 +9,7 @@ const navItems = [
   { path: '#videos', label: 'Videos' },
   { path: '#contact', label: 'Contact' },
   { path: '#support', label: 'Support' },
+  { path: '#admin-dashboard', label: 'Admin Dashboard' },
 ];
 
 export default function Navbar() {
@@ -220,6 +221,7 @@ export default function Navbar() {
             <a href="/#videos" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Videos</a>
             <a href="/#contact" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Contact Us</a>
             <a href="/#support" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Support</a>
+            <a href="/#admin-dashboard" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Admin Dashboard</a>
             
             <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, paddingRight: '16px' }}>
               <button

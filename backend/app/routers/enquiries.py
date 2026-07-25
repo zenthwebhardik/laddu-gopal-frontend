@@ -35,9 +35,9 @@ async def create_enquiry(payload: EnquiryCreate, request: Request, db: AsyncSess
     """
     Full enquiry pipeline:
     0. Anti-spam: reject duplicate email+phone within 24h.
-    1. Save to DB.
+    1. Save to DB with geolocation.
     2. Generate branded PDF in memory.
-    3. Send WhatsApp notification to admin.
+    3. Send WhatsApp notification with location to admin.
     4. Send fallback email with PDF attachment.
     """
     now = datetime.now(timezone.utc)
@@ -62,7 +62,7 @@ async def create_enquiry(payload: EnquiryCreate, request: Request, db: AsyncSess
 
     reference = _generate_reference()
 
-    # ── 1. Save to PostgreSQL ──────────────────────────────────
+    # ── 1. Save to PostgreSQL with geolocation ────────────────
     new_enquiry = Enquiry(
         name=payload.name,
         phone=payload.phone,
@@ -70,6 +70,9 @@ async def create_enquiry(payload: EnquiryCreate, request: Request, db: AsyncSess
         service=payload.service,
         message=payload.message,
         reference=reference,
+        latitude=payload.latitude,
+        longitude=payload.longitude,
+        location_name=payload.location_name,
     )
     db.add(new_enquiry)
     await db.commit()
@@ -89,14 +92,27 @@ async def create_enquiry(payload: EnquiryCreate, request: Request, db: AsyncSess
     pdf_buffer = generate_enquiry_pdf(pdf_data)
     logger.info(f"PDF generated for {reference}")
 
-    # ── 3. WhatsApp notification ────────────────────────────
+    # ── 3. WhatsApp notification with geolocation ──────────
+    location_block = ""
+    if payload.latitude is not None and payload.longitude is not None:
+        location_block = (
+            f"\n📍 *User Location Coordinates:*\n"
+            f"Latitude: {payload.latitude}\n"
+            f"Longitude: {payload.longitude}\n"
+            f"Google Maps Link: https://maps.google.com/?q={payload.latitude},{payload.longitude}\n"
+        )
+        if payload.location_name:
+            location_block += f"Area: {payload.location_name}\n"
+
     wa_message = (
-        f"🔔 *New Enquiry — {reference}*\n\n"
+        f"📩 *NEW SUPPORT REQUEST RECEIVED*\n\n"
+        f"🔔 *Reference:* {reference}\n"
         f"👤 *Name:* {payload.name}\n"
+        f"📧 *Email:* {payload.email}\n"
         f"📞 *Phone:* {payload.phone}\n"
-        f"✉️ *Email:* {payload.email}\n"
         f"🔧 *Service:* {payload.service}\n"
-        f"💬 *Message:* {payload.message[:200]}\n\n"
+        f"💬 *Message/Issue:* {payload.message[:200]}"
+        f"{location_block}\n"
         f"📄 PDF summary generated and emailed to admin."
     )
     wa_sent = send_whatsapp_notification(wa_message)
@@ -111,6 +127,14 @@ async def create_enquiry(payload: EnquiryCreate, request: Request, db: AsyncSess
         f"Message:\n{payload.message}\n\n"
         f"Submitted at: {now.strftime('%d %b %Y, %I:%M %p UTC')}"
     )
+    if payload.latitude is not None and payload.longitude is not None:
+        email_body += (
+            f"\n\nUser Location:\n"
+            f"Latitude: {payload.latitude}\n"
+            f"Longitude: {payload.longitude}\n"
+            f"Google Maps: https://maps.google.com/?q={payload.latitude},{payload.longitude}"
+        )
+
     email_sent = send_admin_email(
         subject=f"New Enquiry: {reference} — {payload.name}",
         body=email_body,
