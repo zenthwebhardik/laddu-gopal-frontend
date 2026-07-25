@@ -1,36 +1,54 @@
-.whatsapp-3d-container {
+.floating-socials-container {
   position: fixed;
   bottom: 24px;
   left: 24px;
-  width: 70px;
-  height: 70px;
   z-index: 1000;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.whatsapp-overlay-btn {
-  position: absolute;
-  inset: 0;
+.floating-social-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2;
-  border-radius: 50%;
-  cursor: pointer;
+  color: white;
   text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  backdrop-filter: blur(4px);
 }
 
-.whatsapp-overlay-btn svg {
-  filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));
+.floating-social-btn:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+.instagram-btn {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+}
+
+.whatsapp-btn {
+  background: #25D366;
 }
 
 @media (max-width: 768px) {
-  .whatsapp-3d-container {
+  .floating-socials-container {
     bottom: 16px;
     left: 16px;
-    width: 60px;
-    height: 60px;
+    gap: 10px;
+  }
+  
+  .floating-social-btn {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .floating-social-btn svg {
+    width: 20px;
+    height: 20px;
   }
 }
