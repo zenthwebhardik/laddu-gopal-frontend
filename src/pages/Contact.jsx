@@ -24,14 +24,19 @@ const initialForm = {
   message: '',
 };
 
+import { useLocationPermission } from '../hooks/useLocationPermission.js';
+
 export default function Contact() {
   const { user, token, API_BASE } = useAuth();
+  const { coords, status: locStatus, showBanner, requestLocation, promptFormLocation, dismissBanner } = useLocationPermission();
+
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
   const [touched, setTouched] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
 
   // Auto-fill from logged-in user context
   useEffect(() => {
@@ -109,7 +114,27 @@ export default function Contact() {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE || 'http://localhost:8000/api/v1'}/contact`, {
+      const baseUrl = API_BASE || 'http://localhost:8000/api/v1';
+
+      // 1. Submit to /queries
+      await fetch(`${baseUrl}/queries`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          name: `${form.firstName} ${form.lastName}`.trim(),
+          phone_number: form.phone,
+          email: form.email,
+          query_text: `Subject: ${form.subject}\n\n${form.message}`,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        }),
+      }).catch(err => console.warn('Queries API call error:', err));
+
+      // 2. Submit to /contact
+      const res = await fetch(`${baseUrl}/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -121,7 +146,9 @@ export default function Contact() {
           email: form.email,
           phone: form.phone,
           subject: form.subject,
-          message: form.message
+          message: form.message,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
         }),
       });
 
@@ -131,6 +158,17 @@ export default function Contact() {
         throw new Error(data.detail || 'Failed to submit contact message. Please try again.');
       }
       
+      // 3. Trigger direct WhatsApp redirection with international country code & URL encoded query
+      const targetPhone = '918059228336';
+      const waText = `📩 *NEW CONTACT INQUIRY*\n\n` +
+        `👤 *Name:* ${form.firstName} ${form.lastName}\n` +
+        `✉️ *Email:* ${form.email}\n` +
+        `📞 *Phone:* ${form.phone}\n` +
+        `📋 *Subject:* ${form.subject}\n` +
+        `💬 *Message:* ${form.message}`;
+      const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(waText)}`;
+      window.open(waUrl, '_blank');
+
       setSubmitted(true);
     } catch (err) {
       setSubmitError(err.message);
@@ -138,6 +176,7 @@ export default function Contact() {
       setSubmitting(false);
     }
   };
+
 
   const getFieldClass = (field) => {
     if (!touched[field]) return 'form-input';
@@ -163,11 +202,18 @@ export default function Contact() {
         </div>
       </section>
 
-      <section className="section" style={{ paddingTop: 0 }}>
-        <div className="container">
-          <div className="contact-section" id="contact-form-section">
-            {/* Contact Info */}
-            <div className="contact-info" id="contact-info">
+      <div className="container" style={{ padding: 'var(--space-2xl) var(--space-lg)' }}>
+        <div className="contact-grid">
+          {/* Contact Details & Spline Canvas */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xl)' }}>
+            <ScrollReveal>
+              <div className="contact-info-card">
+                <h3>Contact Information</h3>
+                <p>Fill out the form or contact us directly through these channels.</p>
+              </div>
+            </ScrollReveal>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
               {contactInfo.map((item, i) => (
                 <ScrollReveal key={i} delay={i * 0.1} direction="left">
                   <div className="contact-info-item" id={`contact-info-${i}`}>
@@ -198,14 +244,14 @@ export default function Contact() {
                   }}
                 >
                   <iframe 
-                    src="https://maps.google.com/maps?q=Laddu+Gopal+Enterprise,+Near+Balaji+Dharam+Kanta,+Panipat&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+                    src="https://maps.google.com/maps?q=29.391195,76.974785+(Laddu+Gopal+Enterprise)&t=&z=17&ie=UTF8&iwloc=B&output=embed" 
                     width="100%" 
                     height="100%" 
                     style={{ border: 0, flex: 1 }} 
                     allowFullScreen="" 
                     loading="lazy" 
                     referrerPolicy="no-referrer-when-downgrade"
-                    title="Google Map Location"
+                    title="Laddu Gopal Enterprise - Shop Location"
                   ></iframe>
                   <div style={{ padding: '16px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-primary)', display: 'flex', justifyContent: 'center' }}>
                     <a 
@@ -221,6 +267,7 @@ export default function Contact() {
                 </div>
               </ScrollReveal>
             </div>
+          </div>
 
             {/* Contact Form */}
             <ScrollReveal direction="right">
@@ -252,14 +299,47 @@ export default function Contact() {
                     <motion.form
                       key="form"
                       onSubmit={handleSubmit}
+                      onFocus={promptFormLocation}
                       noValidate
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                     >
+                      {/* Location Permission Retry Banner */}
+                      {locStatus !== 'granted' && (
+                        <div
+                          style={{
+                            padding: '12px 16px',
+                            marginBottom: '1.5rem',
+                            background: 'rgba(245, 158, 11, 0.08)',
+                            border: '1px solid rgba(245, 158, 11, 0.25)',
+                            borderRadius: '12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '12px',
+                            fontSize: '0.85rem',
+                            color: 'var(--text-secondary)',
+                          }}
+                        >
+                          <div>
+                            <strong style={{ color: 'var(--accent-primary)' }}>📍 Enable Location (Optional):</strong> Allows us to dispatch nearest mobile unit & calculate local quotes.
+                          </div>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            onClick={requestLocation}
+                            style={{ padding: '6px 12px', fontSize: '0.75rem', whiteSpace: 'nowrap', borderRadius: '9999px' }}
+                          >
+                            Allow Location
+                          </button>
+                        </div>
+                      )}
+
                       <h3 style={{ fontSize: '1.3rem', marginBottom: 'var(--space-xl)', color: 'var(--text-primary)' }}>
                         Send Us a Message
                       </h3>
+
 
                       <div className="form-row">
                         <div className="form-group">
@@ -374,6 +454,5 @@ export default function Contact() {
           </div>
         </div>
       </section>
-    </section>
-  );
+    );
 }

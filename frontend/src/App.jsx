@@ -13,11 +13,14 @@ import Portfolio from './pages/Portfolio.jsx';
 import Contact from './pages/Contact.jsx';
 import Support from './pages/Support.jsx';
 import Videos from './pages/Videos.jsx';
+import GateDesigns from './pages/GateDesigns.jsx';
 import QuoteModal from './components/QuoteModal.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
 
 export default function App() {
   const { pathname } = useLocation();
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   // Scroll to top on route change
   useEffect(() => {
@@ -33,11 +36,12 @@ export default function App() {
       
       {/* Overlay Content */}
       <div style={{ position: 'relative', zIndex: 1 }}>
-        <Navbar />
+        <Navbar onOpenAdmin={() => setIsAdminOpen(true)} />
         <main style={{ paddingBottom: '4rem' }}>
           <Home onOpenQuote={() => setIsQuoteModalOpen(true)} />
           <Services />
           <Portfolio />
+          <GateDesigns />
           <Videos />
           <Contact />
           <Support />
@@ -47,6 +51,7 @@ export default function App() {
       </div>
       
       <QuoteModal isOpen={isQuoteModalOpen} onClose={() => setIsQuoteModalOpen(false)} />
+      <AdminDashboard isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
     </>
   );
 }

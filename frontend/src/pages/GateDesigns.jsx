@@ -92,7 +92,6 @@ export default function GateDesigns() {
         </div>
       </section>
 
-
       {/* Lightbox Modal */}
       <AnimatePresence>
         {activeImage && (

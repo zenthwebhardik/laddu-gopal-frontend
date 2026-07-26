@@ -66,8 +66,11 @@ const initialTicket = {
   description: '',
 };
 
+import { useLocationPermission } from '../hooks/useLocationPermission.js';
+
 export default function Support() {
   const { user, token, API_BASE } = useAuth();
+  const { coords, status: locStatus, requestLocation, promptFormLocation } = useLocationPermission();
 
   /* FAQ state */
   const [openFaq, setOpenFaq] = useState(null);
@@ -80,6 +83,7 @@ export default function Support() {
   const [touched, setTouched] = useState({});
   const [ticketSubmitted, setTicketSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
 
   // Auto-fill from logged-in user context
   useEffect(() => {
@@ -157,28 +161,64 @@ export default function Support() {
     setSubmitting(true);
     setSubmitError(null);
 
-    const backendPayload = {
+    const baseUrl = API_BASE || 'http://localhost:8000/api/v1';
+
+    const queryPayload = {
       name: ticket.name,
-      phone: ticket.phone,
+      phone_number: ticket.phone,
       email: ticket.email,
-      service: ticket.category || 'General Inquiry',
-      message: `Priority: ${ticket.priority}\nSubject: ${ticket.subject}\n\n${ticket.description}`,
+      query_text: `Category: ${ticket.category || 'General Inquiry'}\nPriority: ${ticket.priority}\nSubject: ${ticket.subject}\n\n${ticket.description}`,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
     };
 
     try {
-      const res = await fetch(`${API_BASE || 'http://localhost:8000/api/v1'}/enquiries`, {
+      // 1. Submit to /queries (triggers WhatsApp alert to +91 8059228336)
+      await fetch(`${baseUrl}/queries`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
-        body: JSON.stringify(backendPayload),
+        body: JSON.stringify(queryPayload),
+      }).catch(err => console.warn('Queries API submission error:', err));
+
+      // 2. Submit to /enquiries
+      const res = await fetch(`${baseUrl}/enquiries`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          name: ticket.name,
+          phone: ticket.phone,
+          email: ticket.email,
+          service: ticket.category || 'General Inquiry',
+          message: `Priority: ${ticket.priority}\nSubject: ${ticket.subject}\n\n${ticket.description}`,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.detail || 'Failed to submit enquiry. Please try again.');
       }
+
+      // 3. Trigger direct WhatsApp redirection with international country code & URL encoded query
+      const targetPhone = '918059228336';
+      const waText = `🛠️ *NEW SUPPORT TICKET*\n\n` +
+        `👤 *Name:* ${ticket.name}\n` +
+        `✉️ *Email:* ${ticket.email}\n` +
+        `📞 *Phone:* ${ticket.phone}\n` +
+        `📂 *Category:* ${ticket.category || 'General Inquiry'}\n` +
+        `🚨 *Priority:* ${ticket.priority}\n` +
+        `📋 *Subject:* ${ticket.subject}\n` +
+        `💬 *Description:* ${ticket.description}`;
+      const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(waText)}`;
+      window.open(waUrl, '_blank');
+
       setTicketSubmitted(true);
     } catch (err) {
       setSubmitError(err.message);
@@ -186,6 +226,7 @@ export default function Support() {
       setSubmitting(false);
     }
   };
+
 
   const getFieldClass = (field) => {
     if (!touched[field]) return 'form-input';
@@ -336,8 +377,41 @@ export default function Support() {
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -30 }}
                           transition={{ duration: 0.3 }}
+                          onFocus={promptFormLocation}
                         >
+                          {/* Location Permission Retry Banner */}
+                          {locStatus !== 'granted' && (
+                            <div
+                              style={{
+                                padding: '12px 16px',
+                                marginBottom: '1.5rem',
+                                background: 'rgba(245, 158, 11, 0.08)',
+                                border: '1px solid rgba(245, 158, 11, 0.25)',
+                                borderRadius: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '12px',
+                                fontSize: '0.85rem',
+                                color: 'var(--text-secondary)',
+                              }}
+                            >
+                              <div>
+                                <strong style={{ color: 'var(--accent-primary)' }}>📍 Enable Location (Optional):</strong> Helps us route your support ticket to nearest service engineers.
+                              </div>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                onClick={requestLocation}
+                                style={{ padding: '6px 12px', fontSize: '0.75rem', whiteSpace: 'nowrap', borderRadius: '9999px' }}
+                              >
+                                Allow Location
+                              </button>
+                            </div>
+                          )}
+
                           <div className="form-group">
+
                             <label className="form-label" htmlFor="ticket-name">Full Name *</label>
                             <input
                               id="ticket-name"

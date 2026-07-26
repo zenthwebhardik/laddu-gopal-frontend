@@ -81,6 +81,26 @@ export default function Support() {
   const [ticketSubmitted, setTicketSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const [coords, setCoords] = useState({ latitude: null, longitude: null });
+
+  // Capture user geolocation coordinates
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCoords({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+        },
+        (err) => {
+          console.warn('Geolocation capture skipped/denied:', err);
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    }
+  }, []);
+
   // Auto-fill from logged-in user context
   useEffect(() => {
     if (user) {
@@ -157,28 +177,64 @@ export default function Support() {
     setSubmitting(true);
     setSubmitError(null);
 
-    const backendPayload = {
+    const baseUrl = API_BASE || 'http://localhost:8000/api/v1';
+
+    const queryPayload = {
       name: ticket.name,
-      phone: ticket.phone,
+      phone_number: ticket.phone,
       email: ticket.email,
-      service: ticket.category || 'General Inquiry',
-      message: `Priority: ${ticket.priority}\nSubject: ${ticket.subject}\n\n${ticket.description}`,
+      query_text: `Category: ${ticket.category || 'General Inquiry'}\nPriority: ${ticket.priority}\nSubject: ${ticket.subject}\n\n${ticket.description}`,
+      latitude: coords.latitude,
+      longitude: coords.longitude,
     };
 
     try {
-      const res = await fetch(`${API_BASE || 'http://localhost:8000/api/v1'}/enquiries`, {
+      // 1. Submit to /queries (triggers WhatsApp alert to +91 8059228336)
+      await fetch(`${baseUrl}/queries`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
-        body: JSON.stringify(backendPayload),
+        body: JSON.stringify(queryPayload),
+      }).catch(err => console.warn('Queries API submission error:', err));
+
+      // 2. Submit to /enquiries
+      const res = await fetch(`${baseUrl}/enquiries`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          name: ticket.name,
+          phone: ticket.phone,
+          email: ticket.email,
+          service: ticket.category || 'General Inquiry',
+          message: `Priority: ${ticket.priority}\nSubject: ${ticket.subject}\n\n${ticket.description}`,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        }),
       });
 
       const data = await res.json();
       if (!res.ok) {
         throw new Error(data.detail || 'Failed to submit enquiry. Please try again.');
       }
+
+      // 3. Trigger direct WhatsApp redirection with international country code & URL encoded query
+      const targetPhone = '918059228336';
+      const waText = `🛠️ *NEW SUPPORT TICKET*\n\n` +
+        `👤 *Name:* ${ticket.name}\n` +
+        `✉️ *Email:* ${ticket.email}\n` +
+        `📞 *Phone:* ${ticket.phone}\n` +
+        `📂 *Category:* ${ticket.category || 'General Inquiry'}\n` +
+        `🚨 *Priority:* ${ticket.priority}\n` +
+        `📋 *Subject:* ${ticket.subject}\n` +
+        `💬 *Description:* ${ticket.description}`;
+      const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(waText)}`;
+      window.open(waUrl, '_blank');
+
       setTicketSubmitted(true);
     } catch (err) {
       setSubmitError(err.message);
@@ -186,6 +242,7 @@ export default function Support() {
       setSubmitting(false);
     }
   };
+
 
   const getFieldClass = (field) => {
     if (!touched[field]) return 'form-input';
