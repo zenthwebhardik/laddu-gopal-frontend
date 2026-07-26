@@ -33,6 +33,26 @@ export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const [coords, setCoords] = useState({ latitude: null, longitude: null });
+
+  // Capture user geolocation coordinates
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          setCoords({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          });
+        },
+        (err) => {
+          console.warn('Geolocation capture skipped/denied:', err);
+        },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    }
+  }, []);
+
   // Auto-fill from logged-in user context
   useEffect(() => {
     if (user) {
@@ -109,7 +129,27 @@ export default function Contact() {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_BASE || 'http://localhost:8000/api/v1'}/contact`, {
+      const baseUrl = API_BASE || 'http://localhost:8000/api/v1';
+
+      // 1. Submit to /queries
+      await fetch(`${baseUrl}/queries`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          name: `${form.firstName} ${form.lastName}`.trim(),
+          phone_number: form.phone,
+          email: form.email,
+          query_text: `Subject: ${form.subject}\n\n${form.message}`,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
+        }),
+      }).catch(err => console.warn('Queries API call error:', err));
+
+      // 2. Submit to /contact
+      const res = await fetch(`${baseUrl}/contact`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -121,7 +161,9 @@ export default function Contact() {
           email: form.email,
           phone: form.phone,
           subject: form.subject,
-          message: form.message
+          message: form.message,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
         }),
       });
 
@@ -131,6 +173,17 @@ export default function Contact() {
         throw new Error(data.detail || 'Failed to submit contact message. Please try again.');
       }
       
+      // 3. Trigger direct WhatsApp redirection with international country code & URL encoded query
+      const targetPhone = '918059228336';
+      const waText = `📩 *NEW CONTACT INQUIRY*\n\n` +
+        `👤 *Name:* ${form.firstName} ${form.lastName}\n` +
+        `✉️ *Email:* ${form.email}\n` +
+        `📞 *Phone:* ${form.phone}\n` +
+        `📋 *Subject:* ${form.subject}\n` +
+        `💬 *Message:* ${form.message}`;
+      const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(waText)}`;
+      window.open(waUrl, '_blank');
+
       setSubmitted(true);
     } catch (err) {
       setSubmitError(err.message);
@@ -138,6 +191,7 @@ export default function Contact() {
       setSubmitting(false);
     }
   };
+
 
   const getFieldClass = (field) => {
     if (!touched[field]) return 'form-input';
@@ -198,14 +252,14 @@ export default function Contact() {
                   }}
                 >
                   <iframe 
-                    src="https://maps.google.com/maps?q=Laddu+Gopal+Enterprise,+Near+Balaji+Dharam+Kanta,+Panipat&t=&z=15&ie=UTF8&iwloc=&output=embed" 
+                    src="https://maps.google.com/maps?q=29.391195,76.974785+(Laddu+Gopal+Enterprise)&t=&z=17&ie=UTF8&iwloc=B&output=embed" 
                     width="100%" 
                     height="100%" 
                     style={{ border: 0, flex: 1 }} 
                     allowFullScreen="" 
                     loading="lazy" 
                     referrerPolicy="no-referrer-when-downgrade"
-                    title="Google Map Location"
+                    title="Laddu Gopal Enterprise - Shop Location"
                   ></iframe>
                   <div style={{ padding: '16px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-primary)', display: 'flex', justifyContent: 'center' }}>
                     <a 

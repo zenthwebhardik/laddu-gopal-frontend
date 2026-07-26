@@ -12,7 +12,7 @@ const navItems = [
   { path: '#support', label: 'Support' },
 ];
 
-export default function Navbar() {
+export default function Navbar({ onOpenAdmin }) {
   const { theme, toggleTheme } = useTheme();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -34,9 +34,9 @@ export default function Navbar() {
   }, [subnavVisible]);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/v1/stats/unique-users')
+    fetch('http://localhost:8000/api/v1/analytics/unique-customers')
       .then(res => res.ok ? res.json() : null)
-      .then(data => data && setUserCount(data.count))
+      .then(data => data && setUserCount(data.total_unique_customers))
       .catch(() => {});
   }, []);
 
@@ -183,6 +183,14 @@ export default function Navbar() {
               </a>
             ))}
             
+            <button
+              className="nav-link"
+              style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', fontWeight: 600, cursor: 'pointer' }}
+              onClick={() => { handleNavClick(); onOpenAdmin && onOpenAdmin(); }}
+            >
+              🔒 Admin Dashboard
+            </button>
+
             <div className="mobile-only-link" style={{ padding: '16px' }}>
               <button
                 className="theme-toggle"
@@ -204,7 +212,7 @@ export default function Navbar() {
                 fontSize: '0.75rem', fontWeight: '600',
                 color: 'var(--text-secondary)', whiteSpace: 'nowrap',
               }}>
-                <span>👥 {userCount.toLocaleString()}</span>
+                <span>👥 {userCount.toLocaleString()} Reach</span>
               </div>
             )}
             <button
@@ -263,9 +271,13 @@ export default function Navbar() {
             <a href="/#videos" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Videos</a>
             <a href="/#contact" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Contact Us</a>
             <a href="/#support" className="sub-nav-link" onClick={() => setMobileOpen(false)}>Support</a>
+            <button className="sub-nav-link" onClick={() => { setMobileOpen(false); onOpenAdmin && onOpenAdmin(); }} style={{ background: 'none', border: 'none', color: 'var(--accent-primary)', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}>
+              🔒 Admin Dashboard
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
     </>
   );
 }
+
