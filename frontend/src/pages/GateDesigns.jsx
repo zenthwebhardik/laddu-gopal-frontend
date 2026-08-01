@@ -2,30 +2,21 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScrollReveal from '../components/ScrollReveal.jsx';
 import SparkParticles from '../components/SparkParticles.jsx';
-import { Maximize2 } from 'lucide-react';
+import { Maximize2, ExternalLink } from 'lucide-react';
+import { galleryImages } from '../utils/mediaData.js';
 
-const gateDesigns = [
-  { id: 1, title: 'Modern Laser-Cut Steel', category: 'Laser-Cut', img: 'https://images.unsplash.com/photo-1542617757-bb6274431e77?auto=format&fit=crop&w=800&q=80' },
-  { id: 2, title: 'Classic Wrought Iron', category: 'Wrought Iron', img: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=800&q=80' },
-  { id: 3, title: 'Industrial Sliding Gate', category: 'Sliding', img: 'https://images.unsplash.com/photo-1620152427845-8f6a9e1cb07c?auto=format&fit=crop&w=800&q=80' },
-  { id: 4, title: 'Minimalist Entry Frame', category: 'Laser-Cut', img: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80' },
-  { id: 5, title: 'Ornamental Floral Gate', category: 'Wrought Iron', img: 'https://images.unsplash.com/photo-1599839619722-39751411ea63?auto=format&fit=crop&w=800&q=80' },
-  { id: 6, title: 'Heavy Duty Security Gate', category: 'Security', img: 'https://images.unsplash.com/photo-1509391111737-05c083693fb1?auto=format&fit=crop&w=800&q=80' },
-  { id: 7, title: 'Contemporary Wood & Steel', category: 'Artistic', img: 'https://images.unsplash.com/photo-1563298723-dcfebaa392e3?auto=format&fit=crop&w=800&q=80' },
-  { id: 8, title: 'Double Swing Estate Gate', category: 'Security', img: 'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?auto=format&fit=crop&w=800&q=80' },
-  { id: 9, title: 'Automated Track Gate', category: 'Sliding', img: 'https://images.unsplash.com/photo-1632152646200-a29d5b40449f?auto=format&fit=crop&w=800&q=80' },
-  { id: 10, title: 'Custom Artistic Forged', category: 'Artistic', img: 'https://images.unsplash.com/photo-1517646287270-a5a9ca602e5c?auto=format&fit=crop&w=800&q=80' },
-];
+// Filter out gates and steel structure design images
+const gateDesignItems = galleryImages.filter(item => item.category === 'gates' || item.category === 'grills');
 
-const categories = ['All', 'Laser-Cut', 'Wrought Iron', 'Sliding', 'Security', 'Artistic'];
+const categories = ['All', 'gates', 'grills'];
 
 export default function GateDesigns() {
   const [activeImage, setActiveImage] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
 
   const filteredDesigns = selectedCategory === 'All'
-    ? gateDesigns
-    : gateDesigns.filter(item => item.category === selectedCategory);
+    ? gateDesignItems
+    : gateDesignItems.filter(item => item.category === selectedCategory);
 
   return (
     <section id="gate-designs" className="section-group">
@@ -35,10 +26,10 @@ export default function GateDesigns() {
           <ScrollReveal>
             <span className="section-label">Design Gallery</span>
             <h1 className="section-title">
-              Gate Designs <span className="text-gradient">Showcase</span>
+              GATE & Steel <span className="text-gradient">Design Showcase</span>
             </h1>
             <p className="section-subtitle mx-auto">
-              Explore our collection of premium, handcrafted gate designs. From modern laser-cut steel to classic ornamental ironwork.
+              Explore our collection of premium, handcrafted gate designs and civil engineering steel structures. From modern laser-cut steel to classic ornamental ironwork.
             </p>
           </ScrollReveal>
         </div>
@@ -47,25 +38,39 @@ export default function GateDesigns() {
       <section className="section" style={{ paddingTop: 0 }}>
         <div className="container">
           {/* Scrollable Filter Bar */}
-          <div className="craftsman-filter-bar" style={{ marginBottom: '2rem' }}>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                className={`craftsman-filter-btn ${selectedCategory === cat ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(cat)}
-              >
-                {cat}
-              </button>
-            ))}
+          <div className="craftsman-filter-bar" style={{ marginBottom: '2rem', display: 'flex', gap: '10px', justifyContent: 'center' }}>
+            <button
+              type="button"
+              className={`craftsman-filter-btn ${selectedCategory === 'All' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('All')}
+              style={{ padding: '8px 20px', borderRadius: '20px', cursor: 'pointer' }}
+            >
+              All Gate & Grill Designs ({gateDesignItems.length})
+            </button>
+            <button
+              type="button"
+              className={`craftsman-filter-btn ${selectedCategory === 'gates' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('gates')}
+              style={{ padding: '8px 20px', borderRadius: '20px', cursor: 'pointer' }}
+            >
+              Main & Sliding Steel Gates
+            </button>
+            <button
+              type="button"
+              className={`craftsman-filter-btn ${selectedCategory === 'grills' ? 'active' : ''}`}
+              onClick={() => setSelectedCategory('grills')}
+              style={{ padding: '8px 20px', borderRadius: '20px', cursor: 'pointer' }}
+            >
+              Window & Balcony Grills
+            </button>
           </div>
 
-          <div className="craftsman-gallery-grid">
+          <div className="craftsman-gallery-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.5rem' }}>
             {filteredDesigns.map((gate, idx) => (
               <ScrollReveal key={gate.id} delay={idx * 0.05}>
                 <div 
                   className="glass-card craftsman-card" 
-                  style={{ padding: '0', overflow: 'hidden', cursor: 'pointer', position: 'relative' }}
+                  style={{ padding: '0', overflow: 'hidden', cursor: 'pointer', position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}
                   onClick={() => setActiveImage(gate)}
                 >
                   <div style={{ position: 'relative', height: '240px', width: '100%', overflow: 'hidden' }}>
@@ -81,9 +86,8 @@ export default function GateDesigns() {
                       </div>
                     </div>
                   </div>
-                  <div style={{ padding: 'var(--space-sm) var(--space-md)', textAlign: 'center' }}>
+                  <div style={{ padding: 'var(--space-sm) var(--space-md)', textAlign: 'center', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                     <h3 style={{ fontSize: '1rem', marginBottom: 0 }}>{gate.title}</h3>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', fontWeight: 600 }}>{gate.category}</span>
                   </div>
                 </div>
               </ScrollReveal>
@@ -101,7 +105,7 @@ export default function GateDesigns() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setActiveImage(null)}
-            style={{ zIndex: 9999, padding: 'var(--space-md)', flexDirection: 'column' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 9999, padding: 'var(--space-md)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.9)' }}
           >
             <div style={{ width: '100%', maxWidth: '900px', display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
               <button 
@@ -125,7 +129,15 @@ export default function GateDesigns() {
                 alt={activeImage.title}
                 style={{ width: '100%', maxHeight: '75vh', objectFit: 'contain', borderRadius: 'var(--radius-md)' }}
               />
-              <h3 style={{ fontSize: '1.4rem', marginTop: 'var(--space-md)', marginBottom: 'var(--space-xs)', textAlign: 'center' }}>{activeImage.title}</h3>
+              <h3 style={{ fontSize: '1.3rem', marginTop: 'var(--space-md)', marginBottom: 'var(--space-xs)', textAlign: 'center' }}>{activeImage.title}</h3>
+              <a 
+                href={activeImage.imgeUrl} 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ fontSize: '0.85rem', color: '#f97316', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', marginBottom: '8px' }}
+              >
+                View High-Res Image <ExternalLink size={14} />
+              </a>
             </motion.div>
           </motion.div>
         )}
