@@ -11,8 +11,7 @@ reportlab==4.2.0
 twilio==9.2.0
 python-multipart==0.0.9
 slowapi==0.1.9
-pandas==2.2.2
+pandas>=2.2.3
 openpyxl==3.1.5
 apscheduler==3.10.4
 fastapi-mail==1.4.1
-
