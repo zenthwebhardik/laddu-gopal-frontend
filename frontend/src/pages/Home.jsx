@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Zap, Flame, Shield, Settings, Wrench, Building2, Trophy, Truck, Microscope, Clock, MessageSquare, PenTool, CheckCircle, Factory, Droplet, Home as HomeIcon, Play } from 'lucide-react';
+import { Zap, Flame, Shield, Settings, Wrench, Building2, Trophy, Truck, Microscope, Clock, MessageSquare, PenTool, CheckCircle, Factory, Droplet, Home as HomeIcon } from 'lucide-react';
 import ScrollReveal from '../components/ScrollReveal.jsx';
 import SparkParticles from '../components/SparkParticles.jsx';
 import { useMagnetic } from '../hooks/useMagnetic.js';
@@ -9,6 +9,7 @@ import { Link } from 'react-router-dom';
 
 import FluidBackground from '../components/FluidBackground.jsx';
 import WeldingSparkCanvas from '../components/WeldingSparkCanvas.jsx';
+import { galleryImages } from '../utils/mediaData.js';
 
 /* ─── Service data ──────────────────────────────────────────── */
 const services = [
@@ -40,16 +41,11 @@ const processSteps = [
   { step: '04', title: 'QA & Delivery', desc: 'Every weld passes visual, dimensional, and NDT checks before handover with full documentation.', icon: <CheckCircle size={24} /> },
 ];
 
-const gateDesigns = [
-  { id: 1, title: 'Stainless Steel Gate', image: 'https://images.unsplash.com/photo-1533423996375-f914ab160932?q=80&w=600&auto=format&fit=crop' },
-  { id: 2, title: 'Designer Safety Gate', image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=600&auto=format&fit=crop' },
-  { id: 3, title: 'Iron Main Gate', image: 'https://images.unsplash.com/photo-1466025287146-da9b0a7c490a?q=80&w=600&auto=format&fit=crop' },
-  { id: 4, title: 'Modern Laser Cut Gate', image: 'https://images.unsplash.com/photo-1542385151-efd9000785a0?q=80&w=600&auto=format&fit=crop' },
-  { id: 5, title: 'Automatic Sliding Gate', image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=600&auto=format&fit=crop' },
-  { id: 6, title: 'Classic Wrought Iron', image: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=600&auto=format&fit=crop' },
-  { id: 7, title: 'Wood & Steel Fusion', image: 'https://images.unsplash.com/photo-1519710164239-da123dc03ef4?q=80&w=600&auto=format&fit=crop' },
-  { id: 8, title: 'Industrial Security Gate', image: 'https://images.unsplash.com/photo-1596768341641-f7615951d953?q=80&w=600&auto=format&fit=crop' },
-];
+const gateDesigns = galleryImages.slice(0, 8).map((item) => ({
+  id: item.id,
+  title: item.title,
+  image: item.img
+}));
 
 /* ─── Animated Counter ──────────────────────────────────────── */
 function AnimatedCounter({ end, suffix = '', duration = 2 }) {
@@ -330,28 +326,25 @@ export default function Home({ onOpenQuote }) {
               transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
               className="features-3d-wrapper" 
               id="features-3d" 
-              style={{ position: 'relative', borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--border-primary)', boxShadow: '0 0 40px rgba(191, 149, 63, 0.15)', cursor: 'pointer' }}
-              onMouseEnter={() => { if (window.innerWidth > 768 && videoRef.current) videoRef.current.play(); }}
-              onMouseLeave={() => { if (window.innerWidth > 768 && videoRef.current) videoRef.current.pause(); }}
-              onClick={() => { 
-                if (window.innerWidth <= 768 && videoRef.current) {
-                  if (videoRef.current.paused) videoRef.current.play();
-                  else videoRef.current.pause();
-                }
-              }}
+              style={{ position: 'relative', borderRadius: '24px', overflow: 'hidden', border: '1px solid var(--border-primary)', boxShadow: '0 0 40px rgba(191, 149, 63, 0.15)' }}
             >
-              <video 
-                ref={videoRef}
-                src="https://www.w3schools.com/html/mov_bbb.mp4" 
-                loop 
-                muted 
-                playsInline
-                poster="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80"
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              <img
+                src="/assets/images/laddu-gopal.jpg"
+                alt="Laddu Gopal Ji — Blessings for Our Craft"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', minHeight: '320px' }}
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextSibling.style.display = 'flex';
+                }}
               />
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', background: 'rgba(0,0,0,0.2)' }}>
-                <div style={{ padding: '20px', borderRadius: '50%', background: 'var(--accent-gradient)', color: '#fff', boxShadow: '0 4px 15px var(--accent-glow)' }} className="play-icon-mobile hide-on-desktop">
-                  <Play size={32} />
+              {/* Fallback if image not yet placed */}
+              <div style={{ display: 'none', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '320px', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', gap: '12px', fontSize: '1rem', padding: '2rem', textAlign: 'center' }}>
+                <span style={{ fontSize: '3rem' }}>🙏</span>
+                <span>Place <strong>laddu-gopal.jpg</strong> in<br /><code>/frontend/public/assets/images/</code></span>
+              </div>
+              <div style={{ position: 'absolute', bottom: '16px', left: 0, right: 0, display: 'flex', justifyContent: 'center', pointerEvents: 'none' }}>
+                <div style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)', padding: '6px 18px', borderRadius: '30px', color: '#bf953f', fontSize: '0.85rem', fontWeight: 600, border: '1px solid rgba(191,149,63,0.3)' }}>
+                  🙏 Laddu Gopal Ji Ki Jai
                 </div>
               </div>
             </motion.div>

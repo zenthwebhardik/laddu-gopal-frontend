@@ -3,12 +3,12 @@ import ScrollReveal from '../components/ScrollReveal.jsx';
 import { Zap, Flame, Shield, Settings, Wrench, Building2 } from 'lucide-react';
 
 const services = [
+  { icon: <Flame size={28} />, title: 'Precision TIG Welding', desc: 'Precision Tungsten Inert Gas welding for aerospace-grade joints, exotic alloys, and thin-gauge materials requiring flawless aesthetics.' },
   { icon: <Zap size={28} />, title: 'MIG Welding', desc: 'High-speed Metal Inert Gas welding for steel, aluminum, and stainless steel with minimal spatter and maximum deposition rates.' },
-  { icon: <Flame size={28} />, title: 'TIG Welding', desc: 'Precision Tungsten Inert Gas welding for aerospace-grade joints, exotic alloys, and thin-gauge materials requiring flawless aesthetics.' },
   { icon: <Shield size={28} />, title: 'Arc Welding', desc: 'Shielded Metal Arc Welding for robust structural steelwork, pipeline repairs, and heavy field construction in any environment.' },
   { icon: <Settings size={28} />, title: 'Custom Fabrication', desc: 'Bespoke metalwork from blueprint to final product — gates, frames, industrial structures, and ornamental art pieces.' },
   { icon: <Wrench size={28} />, title: 'Pipe Welding', desc: 'Certified pipe welding for oil & gas, plumbing, and industrial process lines with X-ray quality, zero-defect joints.' },
-  { icon: <Building2 size={28} />, title: 'Structural Welding', desc: 'Heavy-duty structural welding for buildings, bridges, and commercial constructions with full AWS D1.1 compliance.' },
+  { icon: <Building2 size={28} />, title: 'Structural Steelwork', desc: 'Heavy-duty structural welding for buildings, bridges, and commercial constructions with full AWS compliance.' },
 ];
 
 export default function Services() {
@@ -18,13 +18,12 @@ export default function Services() {
         <div className="container">
           <ScrollReveal>
             <div className="text-center">
-              <span className="section-label">Our Expertise</span>
+              <span className="section-label">Our Specialized Expertise</span>
               <h2 className="section-title">
-                World-Class <span className="text-gradient">Welding Services</span>
+                World-Class <span className="text-gradient">Welding & Fabrication</span>
               </h2>
               <p className="section-subtitle mx-auto">
-                A full spectrum of welding and fabrication services backed by
-                certified professionals and state-of-the-art equipment.
+                Full spectrum welding services featuring precision TIG welding, storage tank fabrication, structural steel design, and GATE engineering.
               </p>
             </div>
           </ScrollReveal>
