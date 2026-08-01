@@ -3,26 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ScrollReveal from '../components/ScrollReveal.jsx';
 import SparkParticles from '../components/SparkParticles.jsx';
 import { Play } from 'lucide-react';
-
-// Example initial videos
-const initialVideos = [
-  { id: 1, title: 'TIG Welding Precision', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' },
-  { id: 2, title: 'Structural Steel Fabrication', url: 'https://www.youtube.com/embed/tgbNymZ7vqY' },
-  { id: 3, title: 'Custom Pipe Welding', url: 'https://www.youtube.com/embed/9bZkp7q19f0' },
-];
+import { videoGallery } from '../utils/mediaData.js';
 
 export default function Videos() {
   const [activeVideo, setActiveVideo] = useState(null);
-
-  // Extract thumbnail safely (assuming standard YT URLs for demo)
-  const getThumbnail = (url) => {
-    let videoId = '';
-    if (url.includes('embed/')) videoId = url.split('embed/')[1].split('?')[0];
-    else if (url.includes('v=')) videoId = url.split('v=')[1].split('&')[0];
-    else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1].split('?')[0];
-    
-    return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : 'https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80';
-  };
 
   return (
     <section id="videos" className="section-group">
@@ -30,12 +14,12 @@ export default function Videos() {
         <SparkParticles count={15} />
         <div className="container relative" style={{ zIndex: 2 }}>
           <ScrollReveal>
-            <span className="section-label">Media Gallery</span>
+            <span className="section-label">Media & Video Showcase</span>
             <h1 className="section-title">
-              Welding <span className="text-gradient">in Action</span>
+              Welding & Steel Fabrication <span className="text-gradient">in Action</span>
             </h1>
             <p className="section-subtitle mx-auto">
-              Watch our master craftsmen at work. See the precision, power, and art of industrial welding.
+              Watch our master craftsmen execute precision GATE steel design, TIG welding, and industrial tank fabrication.
             </p>
           </ScrollReveal>
         </div>
@@ -43,29 +27,32 @@ export default function Videos() {
 
       <section className="section" style={{ paddingTop: 0 }}>
         <div className="container">
-          <div className="portfolio-grid-new" style={{ marginTop: 'var(--space-md)' }}>
-            {initialVideos.map((video, idx) => (
+          <div className="portfolio-grid-new" style={{ marginTop: 'var(--space-md)', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '2rem' }}>
+            {videoGallery.map((video, idx) => (
               <ScrollReveal key={video.id} delay={idx * 0.1}>
                 <div 
                   className="glass-card" 
-                  style={{ padding: '0', overflow: 'hidden', cursor: 'pointer', position: 'relative' }}
+                  style={{ padding: '0', overflow: 'hidden', cursor: 'pointer', position: 'relative', height: '100%', display: 'flex', flexDirection: 'column' }}
                   onClick={() => setActiveVideo(video)}
                 >
                   <div style={{ position: 'relative', height: '220px', width: '100%', overflow: 'hidden' }}>
                     <img 
-                      src={getThumbnail(video.url)} 
+                      src={video.thumbnail} 
                       alt={video.title} 
                       style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.5s ease' }} 
                       className="hover-zoom"
                     />
-                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <div style={{ width: '60px', height: '60px', background: 'var(--accent-gradient)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 4px 15px var(--accent-glow)' }}>
                         <Play size={24} fill="currentColor" style={{ marginLeft: '4px' }} />
                       </div>
                     </div>
                   </div>
-                  <div style={{ padding: 'var(--space-md)' }}>
-                    <h3 style={{ fontSize: '1.2rem' }}>{video.title}</h3>
+                  <div style={{ padding: 'var(--space-md)', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#f97316', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                      {video.category}
+                    </span>
+                    <h3 style={{ fontSize: '1.1rem', margin: 0, lineHeight: 1.4 }}>{video.title}</h3>
                   </div>
                 </div>
               </ScrollReveal>
@@ -83,7 +70,7 @@ export default function Videos() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setActiveVideo(null)}
-            style={{ zIndex: 9999, padding: 'var(--space-md)', flexDirection: 'column' }}
+            style={{ position: 'fixed', inset: 0, zIndex: 9999, padding: 'var(--space-md)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.9)' }}
           >
             <div style={{ width: '100%', maxWidth: '900px', display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
               <button 
@@ -104,7 +91,7 @@ export default function Videos() {
             >
               <div style={{ position: 'relative', paddingTop: '56.25%', background: '#000' }}>
                 <iframe 
-                  src={`${activeVideo.url}?autoplay=1`} 
+                  src={`${activeVideo.embed}${activeVideo.embed.includes('youtube') ? '?autoplay=1' : ''}`} 
                   title={activeVideo.title}
                   frameBorder="0" 
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
@@ -113,7 +100,8 @@ export default function Videos() {
                 />
               </div>
               <div style={{ padding: 'var(--space-md)' }}>
-                <h3 style={{ fontSize: '1.5rem', marginBottom: 0 }}>{activeVideo.title}</h3>
+                <span style={{ fontSize: '0.85rem', color: '#f97316', fontWeight: 600 }}>{activeVideo.category}</span>
+                <h3 style={{ fontSize: '1.3rem', marginBottom: 0, marginTop: '4px' }}>{activeVideo.title}</h3>
               </div>
             </motion.div>
           </motion.div>
