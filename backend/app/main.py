@@ -18,11 +18,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 
 from .config import settings
-from .database import engine, get_db, Base  # 1. Import Base here
-from .routers import auth, enquiries, contact, comments, stats
+from .database import engine, get_db, Base
+from .routers import auth, enquiries, contact, comments, stats, queries, analytics
+from .services.scheduler_service import start_scheduler, stop_scheduler
 
 # 2. Import all models here so Base registers their schemas before table creation
-from app import models  # Adjust if your models are structured differently (e.g., from . import models)
+from app import models
 
 # ── Logging ─────────────────────────────────────────────────
 logging.basicConfig(
@@ -46,14 +47,25 @@ async def lifespan(app: FastAPI):
             # Check DB connection
             await conn.execute(text("SELECT 1"))
 
-            # 3. Create all tables automatically if they don't exist
+            # Create all tables automatically if they don't exist
             await conn.run_sync(Base.metadata.create_all)
 
         logger.info("✅ PostgreSQL connected and tables initialized — server ready.")
     except Exception as e:
         logger.error(f"Failed to connect to PostgreSQL or create tables: {e}")
 
+    # Start weekly background scheduler
+    try:
+        start_scheduler()
+    except Exception as e:
+        logger.error(f"Failed to start scheduler: {e}")
+
     yield
+
+    try:
+        stop_scheduler()
+    except Exception:
+        pass
 
     await engine.dispose()
     logger.info("PostgreSQL connection closed.")
@@ -62,7 +74,7 @@ async def lifespan(app: FastAPI):
 # ── FastAPI App ─────────────────────────────────────────────
 app = FastAPI(
     title="Laddu Gopal Welding API",
-    description="Backend API for premium welding services — Auth, Enquiries, Contact, Reviews.",
+    description="Backend API for premium welding services — Auth, Enquiries, Contact, Queries, Analytics.",
     version="1.0.0",
     lifespan=lifespan,
     docs_url="/docs",
@@ -80,6 +92,7 @@ app.add_middleware(
         "http://localhost:5173",      # Vite dev server
         "http://localhost:3000",      # Fallback dev port
         "http://127.0.0.1:5173",
+        "http://127.0.0.1:3000",
         "https://laddugopalwelding.com",  # Future production domain
     ],
     allow_credentials=True,
@@ -104,6 +117,9 @@ app.include_router(enquiries.router, prefix=API_PREFIX)
 app.include_router(contact.router, prefix=API_PREFIX)
 app.include_router(comments.router, prefix=API_PREFIX)
 app.include_router(stats.router, prefix=API_PREFIX)
+app.include_router(queries.router, prefix=API_PREFIX)
+app.include_router(analytics.router, prefix=API_PREFIX)
+
 
 
 # ── Health Check ────────────────────────────────────────────

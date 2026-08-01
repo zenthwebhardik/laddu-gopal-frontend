@@ -1,14 +1,18 @@
 """
-Contact router — deduplicate user, save Inquiry, and fire WhatsApp alert.
+Queries router — deduplicate user, save Inquiry, and fire WhatsApp alert.
 
-POST /api/v1/contact
+POST /api/v1/queries
   1. Validate InquiryCreate payload (name, email, phone, message).
-  2. Look up UniqueUser by email OR phone.
+  2. Look up UniqueUser by email OR phone (dedup strategy).
   3. Existing user  → update name + updated_at.
      New user       → INSERT into unique_users.
-  4. INSERT Inquiry(type="CONTACT_US") linked to the user.
-  5. Trigger WhatsApp notification to +91 9306958575.
+  4. INSERT Inquiry(type="REQUEST_QUERY") linked to the user.
+  5. Trigger instant WhatsApp notification to +91 9306958575.
   6. Return InquiryResponse.
+
+Note: the old 24-hr duplicate-submission block is intentionally removed.
+Multiple queries from the same user are valid business events (they're all
+recorded as separate Inquiry rows linked to the same UniqueUser).
 """
 
 import logging
@@ -24,13 +28,13 @@ from ..database import get_db
 from ..services.whatsapp_service import send_inquiry_whatsapp_notification
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/contact", tags=["Contact"])
+router = APIRouter(prefix="/queries", tags=["Queries"])
 
 
 @router.post("/", response_model=InquiryResponse, status_code=status.HTTP_201_CREATED)
-async def create_contact(payload: InquiryCreate, db: AsyncSession = Depends(get_db)):
+async def create_query(payload: InquiryCreate, db: AsyncSession = Depends(get_db)):
     """
-    Save a 'Contact Us' submission and send an instant WhatsApp alert to the admin.
+    Save a 'Request Query' submission and send an instant WhatsApp alert to the admin.
     If the visitor already exists (matched by email OR phone), the inquiry is linked
     to their existing UniqueUser record rather than creating a duplicate.
     """
@@ -78,21 +82,21 @@ async def create_contact(payload: InquiryCreate, db: AsyncSession = Depends(get_
     # ── 2. Save Inquiry ───────────────────────────────────────────────────
     inquiry = Inquiry(
         user_id=unique_user.id,
-        type="CONTACT_US",
+        type="REQUEST_QUERY",
         message=payload.message,
     )
     db.add(inquiry)
     await db.commit()
     await db.refresh(inquiry)
     logger.info(
-        "Inquiry(CONTACT_US) saved: inquiry_id=%s user_id=%s",
+        "Inquiry(REQUEST_QUERY) saved: inquiry_id=%s user_id=%s",
         inquiry.id,
         unique_user.id,
     )
 
     # ── 3. Instant WhatsApp notification to admin ─────────────────────────
     wa_sent = send_inquiry_whatsapp_notification(
-        inquiry_type="CONTACT_US",
+        inquiry_type="REQUEST_QUERY",
         user_name=payload.name,
         user_email=str(payload.email),
         user_phone=payload.phone,
@@ -103,7 +107,7 @@ async def create_contact(payload: InquiryCreate, db: AsyncSession = Depends(get_
         inquiry_id=inquiry.id,
         user_id=unique_user.id,
         is_new_user=is_new_user,
-        type="CONTACT_US",
+        type="REQUEST_QUERY",
         whatsapp_sent=wa_sent,
         submitted_at=inquiry.submitted_at,
     )
