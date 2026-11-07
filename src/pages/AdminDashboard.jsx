@@ -1,59 +1,92 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ShieldCheck, Users, RefreshCw, Send, MapPin, Mail, Phone, Lock, FileSpreadsheet } from 'lucide-react';
-import ScrollReveal from '../components/ScrollReveal.jsx';
-import SparkParticles from '../components/SparkParticles.jsx';
-import { getUniqueCustomers, triggerWeeklyReport } from '../utils/api.js';
+import { Users, RefreshCw, Mail, Phone, Lock, FileSpreadsheet, X } from 'lucide-react';
+import { adminLogin, getUniqueCustomers, triggerWeeklyReport } from '../utils/api.js';
 
+const TYPE_LABEL = { REQUEST_QUERY: 'Rate form', CONTACT_US: 'Contact form' };
+
+function formatWhen(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+}
+
+// Admin login is checked by the backend (/auth/login with ADMIN_EMAIL / ADMIN_PASSCODE from
+// the server's .env). The token lives only in this component's memory and is gone on reload.
 export default function AdminDashboard({ isOpen, onClose }) {
   const [email, setEmail] = useState('');
   const [passcode, setPasscode] = useState('');
-  const [authenticated, setAuthenticated] = useState(false);
+  const [token, setToken] = useState(null);
   const [authError, setAuthError] = useState(null);
+  const [loggingIn, setLoggingIn] = useState(false);
 
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(null);
   const [uniqueCount, setUniqueCount] = useState(0);
   const [recentLeads, setRecentLeads] = useState([]);
   const [reportLoading, setReportLoading] = useState(false);
   const [reportMessage, setReportMessage] = useState(null);
 
-  // Validate credentials: restricted to authorized admin
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setAuthError(null);
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKey = (e) => e.key === 'Escape' && onClose();
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [isOpen, onClose]);
 
-    const cleanEmail = email.trim().toLowerCase();
-    const cleanPasscode = passcode.trim();
-
-    if (cleanEmail === 'admin@laddugopalenterprise.com' && cleanPasscode === '0000') {
-      setAuthenticated(true);
-      fetchAnalytics();
-    } else {
-      setAuthError('Invalid Admin credentials. Access restricted to authorized administrator.');
-    }
+  const logout = () => {
+    setToken(null);
+    setRecentLeads([]);
+    setUniqueCount(0);
+    setPasscode('');
   };
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (t = token) => {
     setLoading(true);
+    setLoadError(null);
     try {
-      const data = await getUniqueCustomers();
+      const data = await getUniqueCustomers(t);
       setUniqueCount(data.total_unique_customers || 0);
       setRecentLeads(data.recent_leads || []);
     } catch (err) {
-      console.error('Failed to load analytics:', err);
+      if (err.status === 401 || err.status === 403) {
+        logout();
+        setAuthError('Session khatam ho gaya ya ye admin account nahi hai. Dobara login karein.');
+      } else {
+        setLoadError(err.message);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleManualReportTrigger = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setAuthError(null);
+    setLoggingIn(true);
+    try {
+      const data = await adminLogin(email.trim(), passcode);
+      setToken(data.access_token);
+      setPasscode('');
+      fetchAnalytics(data.access_token);
+    } catch (err) {
+      setAuthError(err.status === 401 ? 'Email ya passcode galat hai.' : err.message);
+    } finally {
+      setLoggingIn(false);
+    }
+  };
+
+  const handleReport = async () => {
     setReportLoading(true);
     setReportMessage(null);
     try {
-      const res = await triggerWeeklyReport();
-      setReportMessage(res.message || 'Weekly Excel report successfully emailed to hardikgautam1401@gmail.com');
+      const res = await triggerWeeklyReport(token);
+      setReportMessage(res.message);
     } catch (err) {
-      setReportMessage(`Report trigger error: ${err.message}`);
+      setReportMessage(err.message);
     } finally {
       setReportLoading(false);
     }
@@ -62,268 +95,85 @@ export default function AdminDashboard({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        background: 'rgba(10, 10, 15, 0.92)',
-        backdropFilter: 'blur(16px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '1rem',
-        overflowY: 'auto',
-        cursor: 'default',
-      }}
-    >
-      <div style={{ width: '100%', maxWidth: authenticated ? '900px' : '440px', position: 'relative' }}>
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '-40px',
-            right: 0,
-            color: '#fff',
-            fontSize: '1.8rem',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          &times;
+    <div className="admin-overlay" role="dialog" aria-modal="true" aria-label="Admin">
+      <div style={{ width: '100%', maxWidth: token ? '960px' : '440px', position: 'relative' }}>
+        <button onClick={onClose} className="icon-btn" aria-label="Band karein" style={{ position: 'absolute', top: '-48px', right: 0, color: '#fff' }}>
+          <X size={24} />
         </button>
 
-        {!authenticated ? (
-          /* Login Auth Gate */
-          <motion.div
-            className="glass-card"
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            style={{ padding: '2.5rem', textAlign: 'center', borderRadius: '24px', cursor: 'default' }}
-          >
-            <div
-              style={{
-                width: '64px',
-                height: '64px',
-                margin: '0 auto 1.5rem',
-                borderRadius: '50%',
-                background: 'var(--accent-gradient)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                boxShadow: '0 8px 25px var(--accent-glow)',
-              }}
-            >
-              <Lock size={32} />
-            </div>
+        {!token ? (
+          <motion.div className="panel admin-card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <Lock size={28} color="var(--accent-text)" style={{ marginBottom: 'var(--space-3)' }} />
+            <h2 style={{ fontSize: '2rem', marginBottom: '0.25rem' }}>Admin login</h2>
+            <p style={{ marginBottom: 'var(--space-5)' }}>Sirf dukaan ke owner ke liye.</p>
 
-            <h2 style={{ fontSize: '1.6rem', marginBottom: '0.5rem', fontWeight: 800 }}>Admin Security Guard</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.8rem' }}>
-              Restricted portal. Enter authorized email & passcode to access customer analytics.
-            </p>
-
-            <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <input
-                  type="email"
-                  placeholder="Admin Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="off"
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '14px 16px',
-                    borderRadius: '12px',
-                    background: 'var(--bg-input)',
-                    border: '1px solid var(--border-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.95rem',
-                    cursor: 'text',
-                    caretColor: 'var(--accent-primary)',
-                  }}
-                />
+            <form onSubmit={handleLogin}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="admin-email">Email</label>
+                <input id="admin-email" type="email" className="form-input" autoComplete="username"
+                  value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
-
-              <div>
-                <input
-                  type="password"
-                  placeholder="Admin Passcode"
-                  value={passcode}
-                  onChange={(e) => setPasscode(e.target.value)}
-                  autoComplete="new-password"
-                  required
-                  style={{
-                    width: '100%',
-                    padding: '14px 16px',
-                    borderRadius: '12px',
-                    background: 'var(--bg-input)',
-                    border: '1px solid var(--border-primary)',
-                    color: 'var(--text-primary)',
-                    fontSize: '0.95rem',
-                    cursor: 'text',
-                    caretColor: 'var(--accent-primary)',
-                  }}
-                />
+              <div className="form-group">
+                <label className="form-label" htmlFor="admin-pass">Passcode</label>
+                <input id="admin-pass" type="password" className="form-input" autoComplete="current-password"
+                  value={passcode} onChange={(e) => setPasscode(e.target.value)} required />
               </div>
-
-              {authError && (
-                <div style={{ color: '#ef4444', fontSize: '0.85rem', textAlign: 'center' }}>
-                  ⚠ {authError}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                className="btn btn-primary"
-                style={{ width: '100%', padding: '14px', fontSize: '1rem', marginTop: '0.5rem', cursor: 'pointer' }}
-              >
-                Authenticate & Access →
+              {authError && <div className="form-error" role="alert" style={{ marginBottom: 'var(--space-3)' }}>{authError}</div>}
+              <button type="submit" className="btn btn-primary w-full" disabled={loggingIn}>
+                {loggingIn ? <><span className="spinner" /> Check kar rahe hain…</> : 'Login'}
               </button>
             </form>
           </motion.div>
         ) : (
-          /* Authenticated Dashboard */
-          <motion.div
-            className="glass-card"
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            style={{ padding: '2rem', borderRadius: '24px', maxHeight: '85vh', overflowY: 'auto' }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-              <div>
-                <span className="section-label" style={{ marginBottom: '0.2rem' }}>Secured Dashboard</span>
-                <h2 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0 }}>
-                  Customer Reach <span className="text-gradient">& Analytics</span>
-                </h2>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
-                  className="btn btn-secondary"
-                  onClick={fetchAnalytics}
-                  disabled={loading}
-                  style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
+          <motion.div className="panel admin-card" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            style={{ maxHeight: '85vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-5)', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+              <h2 style={{ fontSize: '2rem', margin: 0 }}>Customer leads</h2>
+              <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+                <button className="btn btn-secondary" onClick={() => fetchAnalytics()} disabled={loading}>
                   <RefreshCw size={16} /> Refresh
                 </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={handleManualReportTrigger}
-                  disabled={reportLoading}
-                  style={{ padding: '8px 14px', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  <FileSpreadsheet size={16} /> {reportLoading ? 'Sending...' : 'Send Weekly Report'}
+                <button className="btn btn-primary" onClick={handleReport} disabled={reportLoading}>
+                  <FileSpreadsheet size={16} /> {reportLoading ? 'Bhej rahe hain…' : 'Weekly report email karein'}
                 </button>
+                <button className="btn btn-ghost" onClick={logout}>Logout</button>
               </div>
             </div>
 
-            {reportMessage && (
-              <div style={{ padding: '12px', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '12px', color: '#22c55e', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                ✓ {reportMessage}
-              </div>
-            )}
+            {reportMessage && <div className="notice" role="status">{reportMessage}</div>}
+            {loadError && <div className="form-error" role="alert" style={{ marginBottom: 'var(--space-4)' }}>{loadError}</div>}
 
-            {/* Total Unique Customers Reach Widget */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                gap: '1rem',
-                marginBottom: '2rem',
-              }}
-            >
-              <div
-                style={{
-                  padding: '1.5rem',
-                  background: 'var(--bg-glass)',
-                  border: '1px solid var(--border-accent)',
-                  borderRadius: '16px',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600 }}>
-                    Total Unique Customers Reach
-                  </span>
-                  <Users size={22} color="var(--accent-primary)" />
-                </div>
-                <div style={{ fontSize: '2.5rem', fontWeight: 900, color: '#fff' }}>
-                  {loading ? '...' : uniqueCount.toLocaleString()}
-                </div>
-                <span style={{ fontSize: '0.75rem', color: 'var(--accent-primary)' }}>
-                  Distinct Non-Duplicate Reach (Phone/Email)
-                </span>
+            <div className="admin-stat" style={{ marginBottom: 'var(--space-6)', maxWidth: 320 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 600 }}>Alag-alag customers</span>
+                <Users size={22} color="var(--accent-text)" />
               </div>
-
-              <div
-                style={{
-                  padding: '1.5rem',
-                  background: 'var(--bg-glass)',
-                  border: '1px solid var(--border-primary)',
-                  borderRadius: '16px',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', fontWeight: 600 }}>
-                    Admin Account
-                  </span>
-                  <ShieldCheck size={22} color="#22c55e" />
-                </div>
-                <div style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                  hardikgautam1401@gmail.com
-                </div>
-                <span style={{ fontSize: '0.75rem', color: '#22c55e' }}>
-                  Verified & Authorized
-                </span>
-              </div>
+              <div className="value">{loading ? '…' : uniqueCount.toLocaleString('en-IN')}</div>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-3)' }}>Mobile number ke hisaab se, bina duplicate</span>
             </div>
 
-            {/* Recent Inquiry Leads Table */}
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Recent Customer Inquiries & Leads</h3>
+            <h3 style={{ marginBottom: 'var(--space-3)' }}>Haal ke leads</h3>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              <table className="admin-table">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--border-primary)', textAlign: 'left' }}>
-                    <th style={{ padding: '10px' }}>Name</th>
-                    <th style={{ padding: '10px' }}>Contact Details</th>
-                    <th style={{ padding: '10px' }}>Query Message</th>
-                    <th style={{ padding: '10px' }}>Location / Geolocation</th>
-                  </tr>
+                  <tr><th>Naam</th><th>Contact</th><th>Message</th><th>Kab</th></tr>
                 </thead>
                 <tbody>
                   {recentLeads.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} style={{ padding: '20px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
-                        No query entries found yet. Submit a contact or support form to see live entries.
-                      </td>
-                    </tr>
+                    <tr><td colSpan={4} style={{ textAlign: 'center', padding: '20px' }}>{loading ? 'Load ho raha hai…' : 'Abhi koi lead nahi hai.'}</td></tr>
                   ) : (
                     recentLeads.map((lead) => (
-                      <tr key={lead.id} style={{ borderBottom: '1px solid var(--border-secondary)' }}>
-                        <td style={{ padding: '10px', color: 'var(--text-primary)', fontWeight: 600 }}>{lead.name}</td>
-                        <td style={{ padding: '10px' }}>
-                          <div>📞 {lead.phone}</div>
-                          <div>✉️ {lead.email}</div>
+                      <tr key={lead.id}>
+                        <td style={{ color: 'var(--text)', fontWeight: 600 }}>
+                          {lead.name}
+                          <div style={{ fontWeight: 400, fontSize: '0.85rem', color: 'var(--text-3)' }}>{TYPE_LABEL[lead.type] || lead.type}</div>
                         </td>
-                        <td style={{ padding: '10px', maxWidth: '240px', whiteSpace: 'pre-wrap' }}>{lead.query}</td>
-                        <td style={{ padding: '10px' }}>
-                          {lead.latitude && lead.longitude ? (
-                            <a
-                              href={`https://maps.google.com/?q=${lead.latitude},${lead.longitude}`}
-                              target="_blank"
-                              rel="noreferrer"
-                              style={{ color: 'var(--accent-primary)', textDecoration: 'underline', display: 'flex', alignItems: 'center', gap: '4px' }}
-                            >
-                              <MapPin size={14} /> Lat {lead.latitude.toFixed(4)}, Long {lead.longitude.toFixed(4)}
-                            </a>
-                          ) : (
-                            <span style={{ color: 'var(--text-tertiary)' }}>N/A</span>
-                          )}
+                        <td>
+                          <a className="link" href={`tel:${lead.phone}`} style={{ display: 'flex', gap: 6, alignItems: 'center' }}><Phone size={14} /> {lead.phone}</a>
+                          {lead.email && <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}><Mail size={14} /> {lead.email}</div>}
                         </td>
+                        <td style={{ maxWidth: '300px', whiteSpace: 'pre-wrap' }}>{lead.query}</td>
+                        <td style={{ whiteSpace: 'nowrap' }}>{formatWhen(lead.created_at)}</td>
                       </tr>
                     ))
                   )}

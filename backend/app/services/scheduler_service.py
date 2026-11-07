@@ -23,15 +23,15 @@ async def run_weekly_customer_report_job():
     Weekly background job:
     1. Open DB session.
     2. Aggregate 7-day customer entries into .xlsx file.
-    3. Email report attachment to hardikgautam1401@gmail.com.
+    3. Email report attachment to REPORT_EMAIL / ADMIN_EMAIL.
     """
     logger.info("Starting weekly customer report background job...")
     try:
         async with async_session() as db:
             excel_buffer = await generate_weekly_customer_excel(db)
-            recipient = settings.admin_email or "hardikgautam1401@gmail.com"
+            recipient = settings.report_email or settings.admin_email
             sent = send_admin_email(
-                subject=f"Weekly Customer Analytics & Growth Report — {datetime.now(timezone.utc).strftime('%d %b %Y')}",
+                subject=f"[Laddu Gopal Enterprise] Weekly lead report — {datetime.now(timezone.utc).strftime('%d %b %Y')}",
                 body="Hello Admin,\n\nPlease find attached the weekly customer inquiries and growth statistics Excel report (.xlsx) for Laddu Gopal Welding.\n\nBest regards,\nLaddu Gopal System",
                 attachment=excel_buffer,
                 attachment_name=f"laddu_gopal_weekly_report_{datetime.now(timezone.utc).strftime('%Y%m%d')}.xlsx",

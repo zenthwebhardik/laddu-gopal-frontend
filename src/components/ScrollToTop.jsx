@@ -1,34 +1,25 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import { ArrowUp } from 'lucide-react';
 
 export default function ScrollToTop() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setVisible(window.scrollY > 400);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setVisible(window.scrollY > 900);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const scrollUp = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (!visible) return null;
 
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.button
-          className="scroll-top"
-          onClick={scrollUp}
-          initial={{ opacity: 0, scale: 0.5, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.5, y: 20 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          aria-label="Scroll to top"
-          id="scroll-top-btn"
-        >
-          ↑
-        </motion.button>
-      )}
-    </AnimatePresence>
+    <button
+      className="scroll-top"
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      aria-label="Upar jaayein"
+      id="scroll-top-btn"
+    >
+      <ArrowUp size={20} />
+    </button>
   );
 }

@@ -1,458 +1,66 @@
-import { useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-
-import ScrollReveal from '../components/ScrollReveal.jsx';
-import SparkParticles from '../components/SparkParticles.jsx';
-import { validateField } from '../utils/validators.js';
-import { useAuth } from '../context/AuthContext.jsx';
-
 import { MapPin, Phone, Mail, Clock } from 'lucide-react';
+import LeadForm from '../components/LeadForm.jsx';
+import { BUSINESS, telLink } from '../utils/business.js';
 
 const contactInfo = [
-  { icon: <MapPin size={24} />, title: 'Visit Us', text: 'Laddu Gopal Enterprise, Near Balaji Dharam Kanta, Ram Nagar Street No. 3, Jatal Road, Panipat, Haryana 132105' },
-  { icon: <Phone size={24} />, title: 'Call Us', text: '+91 93069 58575\n+91 98765 43210' },
-  { icon: <Mail size={24} />, title: 'Email Us', text: 'info@laddugopalwelding.com\nquotes@laddugopalwelding.com' },
-  { icon: <Clock size={24} />, title: 'Working Hours', text: 'Mon — Sat: 8:00 AM – 7:00 PM\nSun: Emergency Only' },
+  { icon: <MapPin size={22} />, title: 'Pata', text: BUSINESS.address, href: BUSINESS.mapsLink, external: true },
+  { icon: <Phone size={22} />, title: 'Phone / WhatsApp', text: BUSINESS.phoneDisplay, href: telLink },
+  { icon: <Mail size={22} />, title: 'Email', text: BUSINESS.email, href: `mailto:${BUSINESS.email}` },
+  { icon: <Clock size={22} />, title: 'Samay', text: BUSINESS.hours },
 ];
 
-const initialForm = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  subject: '',
-  message: '',
-};
-
-import { useLocationPermission } from '../hooks/useLocationPermission.js';
-
 export default function Contact() {
-  const { user, token, API_BASE } = useAuth();
-  const { coords, status: locStatus, showBanner, requestLocation, promptFormLocation, dismissBanner } = useLocationPermission();
-
-  const [form, setForm] = useState(initialForm);
-  const [errors, setErrors] = useState({});
-  const [submitError, setSubmitError] = useState(null);
-  const [touched, setTouched] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-
-  // Auto-fill from logged-in user context
-  useEffect(() => {
-    if (user) {
-      setForm(prev => ({
-        ...prev,
-        firstName: user.name?.split(' ')[0] || prev.firstName,
-        lastName: user.name?.split(' ').slice(1).join(' ') || prev.lastName,
-        email: user.email || prev.email,
-      }));
-    }
-  }, [user]);
-
-  const updateField = useCallback((field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-
-    if (touched[field]) {
-      const fieldTypes = {
-        firstName: 'name',
-        lastName: 'name',
-        email: 'email',
-        phone: 'phone',
-        subject: 'subject',
-        message: 'message',
-      };
-      const result = validateField(fieldTypes[field], value);
-      setErrors((prev) => ({ ...prev, [field]: result.valid ? '' : result.error }));
-    }
-  }, [touched]);
-
-  const handleBlur = useCallback((field) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
-    const fieldTypes = {
-      firstName: 'name',
-      lastName: 'name',
-      email: 'email',
-      phone: 'phone',
-      subject: 'subject',
-      message: 'message',
-    };
-    const result = validateField(fieldTypes[field], form[field]);
-    setErrors((prev) => ({ ...prev, [field]: result.valid ? '' : result.error }));
-  }, [form]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSubmitError(null);
-
-    const fieldTypes = {
-      firstName: 'name',
-      lastName: 'name',
-      email: 'email',
-      phone: 'phone',
-      subject: 'subject',
-      message: 'message',
-    };
-
-    const newErrors = {};
-    let valid = true;
-    const allTouched = {};
-
-    for (const [key, type] of Object.entries(fieldTypes)) {
-      allTouched[key] = true;
-      const result = validateField(type, form[key]);
-      if (!result.valid) {
-        newErrors[key] = result.error;
-        valid = false;
-      }
-    }
-
-    setTouched(allTouched);
-    setErrors(newErrors);
-
-    if (!valid) return;
-
-    setSubmitting(true);
-    try {
-      const baseUrl = API_BASE || 'http://localhost:8000/api/v1';
-
-      // 1. Submit to /queries
-      await fetch(`${baseUrl}/queries`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          name: `${form.firstName} ${form.lastName}`.trim(),
-          phone_number: form.phone,
-          email: form.email,
-          query_text: `Subject: ${form.subject}\n\n${form.message}`,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-        }),
-      }).catch(err => console.warn('Queries API call error:', err));
-
-      // 2. Submit to /contact
-      const res = await fetch(`${baseUrl}/contact`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          first_name: form.firstName,
-          last_name: form.lastName,
-          email: form.email,
-          phone: form.phone,
-          subject: form.subject,
-          message: form.message,
-          latitude: coords.latitude,
-          longitude: coords.longitude,
-        }),
-      });
-
-      const data = await res.json();
-      
-      if (!res.ok) {
-        throw new Error(data.detail || 'Failed to submit contact message. Please try again.');
-      }
-      
-      // 3. Trigger direct WhatsApp redirection with international country code & URL encoded query
-      const targetPhone = '918059228336';
-      const waText = `📩 *NEW CONTACT INQUIRY*\n\n` +
-        `👤 *Name:* ${form.firstName} ${form.lastName}\n` +
-        `✉️ *Email:* ${form.email}\n` +
-        `📞 *Phone:* ${form.phone}\n` +
-        `📋 *Subject:* ${form.subject}\n` +
-        `💬 *Message:* ${form.message}`;
-      const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(waText)}`;
-      window.open(waUrl, '_blank');
-
-      setSubmitted(true);
-    } catch (err) {
-      setSubmitError(err.message);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-
-  const getFieldClass = (field) => {
-    if (!touched[field]) return 'form-input';
-    if (errors[field]) return 'form-input error';
-    return 'form-input valid';
-  };
-
   return (
-    <section id="contact" className="section-group">
-      <section className="page-header" id="contact-header">
-        <SparkParticles count={15} />
-        <div className="container relative" style={{ zIndex: 2 }}>
-          <ScrollReveal>
-            <span className="section-label">Get In Touch</span>
-            <h1 className="section-title">
-              Let's <span className="text-gradient">Build Together</span>
-            </h1>
-            <p className="section-subtitle mx-auto">
-              Have a project in mind? Need a quote? Reach out and our team
-              will get back to you within 24 hours.
-            </p>
-          </ScrollReveal>
+    <section id="contact" className="section section--plate" aria-labelledby="contact-title">
+      <div className="container">
+        <div className="section-head" id="contact-header">
+          <h2 id="contact-title">Dukaan par aaiye ya message kijiye</h2>
+          <p>Call aur WhatsApp sabse jaldi hai. Form bhejenge to hum aapko call karke baat karenge.</p>
         </div>
-      </section>
 
-      <div className="container" style={{ padding: 'var(--space-2xl) var(--space-lg)' }}>
         <div className="contact-grid">
-          {/* Contact Details & Spline Canvas */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xl)' }}>
-            <ScrollReveal>
-              <div className="contact-info-card">
-                <h3>Contact Information</h3>
-                <p>Fill out the form or contact us directly through these channels.</p>
-              </div>
-            </ScrollReveal>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-              {contactInfo.map((item, i) => (
-                <ScrollReveal key={i} delay={i * 0.1} direction="left">
-                  <div className="contact-info-item" id={`contact-info-${i}`}>
-                    <div className="contact-icon">{item.icon}</div>
-                    <div>
-                      <h4>{item.title}</h4>
-                      {item.text.split('\n').map((line, j) => (
-                        <p key={j}>{line}</p>
-                      ))}
-                    </div>
+          <div>
+            <ul className="contact-list">
+              {contactInfo.map((item) => (
+                <li className="contact-info-item" key={item.title}>
+                  <span className="contact-icon">{item.icon}</span>
+                  <div>
+                    <h3>{item.title}</h3>
+                    {item.href ? (
+                      <a
+                        href={item.href}
+                        target={item.external ? '_blank' : undefined}
+                        rel={item.external ? 'noopener noreferrer' : undefined}
+                      >
+                        {item.text}
+                      </a>
+                    ) : (
+                      <p>{item.text}</p>
+                    )}
                   </div>
-                </ScrollReveal>
+                </li>
               ))}
+            </ul>
 
-              {/* Map Scene */}
-              <ScrollReveal delay={0.4} direction="left">
-                <div
-                  className="glass-card"
-                  id="spline-container"
-                  style={{
-                    height: 350,
-                    width: '100%',
-                    overflow: 'hidden',
-                    position: 'relative',
-                    padding: 0,
-                    display: 'flex',
-                    flexDirection: 'column'
-                  }}
-                >
-                  <iframe 
-                    src="https://maps.google.com/maps?q=29.391195,76.974785+(Laddu+Gopal+Enterprise)&t=&z=17&ie=UTF8&iwloc=B&output=embed" 
-                    width="100%" 
-                    height="100%" 
-                    style={{ border: 0, flex: 1 }} 
-                    allowFullScreen="" 
-                    loading="lazy" 
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="Laddu Gopal Enterprise - Shop Location"
-                  ></iframe>
-                  <div style={{ padding: '16px', background: 'var(--bg-card)', borderTop: '1px solid var(--border-primary)', display: 'flex', justifyContent: 'center' }}>
-                    <a 
-                      href="https://maps.app.goo.gl/MDbgHCU9Udf7Pqq18" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="btn btn-primary"
-                      style={{ padding: '8px 24px', fontSize: '0.9rem', width: '100%', display: 'flex', justifyContent: 'center', gap: '8px' }}
-                    >
-                      <MapPin size={18} /> Get Directions
-                    </a>
-                  </div>
-                </div>
-              </ScrollReveal>
+            <div className="map-frame" id="map-container">
+              <iframe
+                src={BUSINESS.mapsEmbed}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Laddu Gopal Enterprise ka naksha"
+              />
+              <a href={BUSINESS.mapsLink} target="_blank" rel="noopener noreferrer" className="btn btn-secondary">
+                <MapPin size={18} /> Google Maps par rasta dekhein
+              </a>
             </div>
           </div>
 
-            {/* Contact Form */}
-            <ScrollReveal direction="right">
-              <div className="glass-card form-card" id="contact-form">
-                <AnimatePresence mode="wait">
-                  {submitted ? (
-                    <motion.div
-                      key="success"
-                      className="success-message"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      <div className="success-icon">✓</div>
-                      <h3 style={{ fontSize: '1.5rem', marginBottom: 'var(--space-md)', color: 'var(--text-primary)' }}>
-                        Message Sent!
-                      </h3>
-                      <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-xl)' }}>
-                        Thank you for reaching out. We'll get back to you within 24 hours.
-                      </p>
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => { setSubmitted(false); setForm(initialForm); setTouched({}); setErrors({}); }}
-                      >
-                        Send Another Message
-                      </button>
-                    </motion.div>
-                  ) : (
-                    <motion.form
-                      key="form"
-                      onSubmit={handleSubmit}
-                      onFocus={promptFormLocation}
-                      noValidate
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                    >
-                      {/* Location Permission Retry Banner */}
-                      {locStatus !== 'granted' && (
-                        <div
-                          style={{
-                            padding: '12px 16px',
-                            marginBottom: '1.5rem',
-                            background: 'rgba(245, 158, 11, 0.08)',
-                            border: '1px solid rgba(245, 158, 11, 0.25)',
-                            borderRadius: '12px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            gap: '12px',
-                            fontSize: '0.85rem',
-                            color: 'var(--text-secondary)',
-                          }}
-                        >
-                          <div>
-                            <strong style={{ color: 'var(--accent-primary)' }}>📍 Enable Location (Optional):</strong> Allows us to dispatch nearest mobile unit & calculate local quotes.
-                          </div>
-                          <button
-                            type="button"
-                            className="btn btn-secondary"
-                            onClick={requestLocation}
-                            style={{ padding: '6px 12px', fontSize: '0.75rem', whiteSpace: 'nowrap', borderRadius: '9999px' }}
-                          >
-                            Allow Location
-                          </button>
-                        </div>
-                      )}
-
-                      <h3 style={{ fontSize: '1.3rem', marginBottom: 'var(--space-xl)', color: 'var(--text-primary)' }}>
-                        Send Us a Message
-                      </h3>
-
-
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="firstName">First Name *</label>
-                          <input
-                            id="firstName"
-                            type="text"
-                            className={getFieldClass('firstName')}
-                            placeholder="John"
-                            value={form.firstName}
-                            onChange={(e) => updateField('firstName', e.target.value)}
-                            onBlur={() => handleBlur('firstName')}
-                          />
-                          {errors.firstName && <div className="form-error" id="error-firstName">⚠ {errors.firstName}</div>}
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="lastName">Last Name *</label>
-                          <input
-                            id="lastName"
-                            type="text"
-                            className={getFieldClass('lastName')}
-                            placeholder="Doe"
-                            value={form.lastName}
-                            onChange={(e) => updateField('lastName', e.target.value)}
-                            onBlur={() => handleBlur('lastName')}
-                          />
-                          {errors.lastName && <div className="form-error" id="error-lastName">⚠ {errors.lastName}</div>}
-                        </div>
-                      </div>
-
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="email">Email Address *</label>
-                          <input
-                            id="email"
-                            type="email"
-                            className={getFieldClass('email')}
-                            placeholder="john@example.com"
-                            value={form.email}
-                            onChange={(e) => updateField('email', e.target.value)}
-                            onBlur={() => handleBlur('email')}
-                          />
-                          {errors.email && <div className="form-error" id="error-email">⚠ {errors.email}</div>}
-                        </div>
-                        <div className="form-group">
-                          <label className="form-label" htmlFor="phone">Phone Number *</label>
-                          <input
-                            id="phone"
-                            type="tel"
-                            className={getFieldClass('phone')}
-                            placeholder="+919876543210"
-                            value={form.phone}
-                            onChange={(e) => updateField('phone', e.target.value)}
-                            onBlur={() => handleBlur('phone')}
-                          />
-                          {errors.phone && <div className="form-error" id="error-phone">⚠ {errors.phone}</div>}
-                        </div>
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="subject">Subject *</label>
-                        <input
-                          id="subject"
-                          type="text"
-                          className={getFieldClass('subject')}
-                          placeholder="Project inquiry, quote request, etc."
-                          value={form.subject}
-                          onChange={(e) => updateField('subject', e.target.value)}
-                          onBlur={() => handleBlur('subject')}
-                        />
-                        {errors.subject && <div className="form-error" id="error-subject">⚠ {errors.subject}</div>}
-                      </div>
-
-                      <div className="form-group">
-                        <label className="form-label" htmlFor="message">Message *</label>
-                        <textarea
-                          id="message"
-                          className={`form-textarea ${touched.message ? (errors.message ? 'error' : 'valid') : ''}`}
-                          placeholder="Tell us about your project, requirements, timeline..."
-                          rows={5}
-                          value={form.message}
-                          onChange={(e) => updateField('message', e.target.value)}
-                          onBlur={() => handleBlur('message')}
-                        />
-                        {errors.message && <div className="form-error" id="error-message">⚠ {errors.message}</div>}
-                      </div>
-
-                      {submitError && (
-                        <div className="form-error" style={{ marginBottom: '1rem', textAlign: 'center', color: '#ef4444' }}>
-                          ⚠ {submitError}
-                        </div>
-                      )}
-
-                      <button
-                        type="submit"
-                        className="btn btn-primary"
-                        id="contact-submit"
-                        disabled={submitting}
-                        style={{ width: '100%', padding: '16px', fontSize: '1rem' }}
-                      >
-                        {submitting ? (
-                          <><div className="spinner" /> Sending...</>
-                        ) : (
-                          'Send Message →'
-                        )}
-                      </button>
-                    </motion.form>
-                  )}
-                </AnimatePresence>
-              </div>
-            </ScrollReveal>
+          <div className="panel form-card" id="contact-form">
+            <h3>Rate ke liye form</h3>
+            <LeadForm source="contact" idPrefix="contact" />
           </div>
         </div>
-      </section>
-    );
+      </div>
+    </section>
+  );
 }

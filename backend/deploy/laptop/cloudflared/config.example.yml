@@ -1,0 +1,12 @@
+# Cloudflare Tunnel for the Laddu Gopal API (used by the optional `cloudflared` service).
+# copy config.example.yml config.yml   and put the tunnel's credentials.json next to it.
+# See ..\LAPTOP.md → "Public access (Cloudflare Tunnel)".
+tunnel: <TUNNEL-ID>
+credentials-file: /etc/cloudflared/credentials.json
+# TCP instead of QUIC: steadier on laptop Wi-Fi (same choice as CBP)
+protocol: http2
+
+ingress:
+  - hostname: api.laddugopalenterprise.com
+    service: http://api:8000
+  - service: http_status:404

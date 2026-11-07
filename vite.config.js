@@ -9,14 +9,11 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    chunkSizeWarningLimit: 2000,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('@react-three') || (id.includes('three') && !id.includes('react-three'))) return 'three-core';
           if (id.includes('framer-motion')) return 'framer';
-          if (id.includes('gsap')) return 'gsap';
-          if (id.includes('react-router-dom') || id.includes('react-dom') || (id.includes('/react/') && !id.includes('react-three'))) return 'react-vendor';
+          if (id.includes('react-router') || id.includes('react-dom') || id.includes('/react/')) return 'react-vendor';
         },
       },
     },

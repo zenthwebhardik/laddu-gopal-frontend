@@ -138,7 +138,7 @@ class UniqueUser(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(100))
-    email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    email: Mapped[Optional[str]] = mapped_column(String(255), unique=True, index=True, nullable=True)
     phone: Mapped[str] = mapped_column(String(30), unique=True, index=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=text("now()")
