@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar.jsx';
 import Footer from './components/Footer.jsx';
 import ScrollToTop from './components/ScrollToTop.jsx';
-import LavaCursor from './components/LavaCursor.jsx';
-import ThreeDScene from './components/ThreeDScene.jsx';
 import WhatsAppButton from './components/WhatsAppButton.jsx';
 
 import Home from './pages/Home.jsx';
@@ -14,45 +12,42 @@ import Contact from './pages/Contact.jsx';
 import Support from './pages/Support.jsx';
 import Videos from './pages/Videos.jsx';
 import GateDesigns from './pages/GateDesigns.jsx';
+import NotFound from './pages/NotFound.jsx';
 import QuoteModal from './components/QuoteModal.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 
 export default function App() {
-  const { pathname } = useLocation();
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
-
-  // Scroll to top on route change
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [pathname]);
+  const openQuote = () => setIsQuoteModalOpen(true);
 
   return (
     <>
-      {/* Global Background and Effects */}
-      <ThreeDScene />
-      <LavaCursor />
+      <a href="#main" className="skip-link">Seedhe content par jaayein</a>
+      <Navbar />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <main id="main">
+              <Home onOpenQuote={openQuote} />
+              <Services />
+              <GateDesigns />
+              <Portfolio />
+              <Videos />
+              <Contact />
+              <Support />
+            </main>
+          }
+        />
+        <Route path="*" element={<main id="main"><NotFound /></main>} />
+      </Routes>
+      <Footer onOpenAdmin={() => setIsAdminOpen(true)} />
+      <ScrollToTop />
       <WhatsAppButton />
-      
-      {/* Overlay Content */}
-      <div style={{ position: 'relative', zIndex: 1 }}>
-        <Navbar onOpenAdmin={() => setIsAdminOpen(true)} />
-        <main style={{ paddingBottom: '4rem' }}>
-          <Home onOpenQuote={() => setIsQuoteModalOpen(true)} />
-          <Services />
-          <Portfolio />
-          <GateDesigns />
-          <Videos />
-          <Contact />
-          <Support />
-        </main>
-        <Footer />
-        <ScrollToTop />
-      </div>
-      
+
       <QuoteModal isOpen={isQuoteModalOpen} onClose={() => setIsQuoteModalOpen(false)} />
       <AdminDashboard isOpen={isAdminOpen} onClose={() => setIsAdminOpen(false)} />
     </>
   );
 }
-

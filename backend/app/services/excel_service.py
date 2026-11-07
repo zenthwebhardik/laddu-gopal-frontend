@@ -12,7 +12,7 @@ import pandas as pd
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from ..models.db import Query, ContactForm, SupportRequest, CustomerLead, Enquiry, Contact
+from ..models.db import Query, ContactForm, SupportRequest, CustomerLead, Enquiry, Contact, Inquiry, UniqueUser
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +44,25 @@ async def generate_weekly_customer_excel(db: AsyncSession) -> io.BytesIO:
     # 5. Fetch enquiries from past 7 days
     enquiries_res = await db.execute(select(Enquiry).where(Enquiry.created_at >= cutoff))
     enquiries = enquiries_res.scalars().all()
+
+    # 6. Website leads (contact + quote forms) from past 7 days
+    web_res = await db.execute(
+        select(Inquiry, UniqueUser)
+        .join(UniqueUser, Inquiry.user_id == UniqueUser.id)
+        .where(Inquiry.submitted_at >= cutoff)
+        .order_by(Inquiry.submitted_at.desc())
+    )
+    web_leads = [
+        {
+            "Name": u.name,
+            "Phone": u.phone,
+            "Email": u.email or "",
+            "Type": i.type,
+            "Message": i.message,
+            "Submitted At (UTC)": i.submitted_at.strftime("%Y-%m-%d %H:%M:%S") if i.submitted_at else "",
+        }
+        for i, u in web_res.all()
+    ]
 
     # Build data frames
     queries_data = [
@@ -91,6 +110,7 @@ async def generate_weekly_customer_excel(db: AsyncSession) -> io.BytesIO:
     summary_stats = [
         {"Metric": "Report Generation Date", "Value": now.strftime("%Y-%m-%d %H:%M:%S UTC")},
         {"Metric": "Reporting Window", "Value": f"Past 7 Days ({cutoff.strftime('%Y-%m-%d')} to {now.strftime('%Y-%m-%d')})"},
+        {"Metric": "New Website Leads", "Value": len(web_leads)},
         {"Metric": "New Queries Received", "Value": len(queries_data)},
         {"Metric": "New Customer Leads Captured", "Value": len(leads_data)},
         {"Metric": "New Contact Form Submissions", "Value": len(contacts)},
@@ -106,6 +126,7 @@ async def generate_weekly_customer_excel(db: AsyncSession) -> io.BytesIO:
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df_summary.to_excel(writer, sheet_name="Summary Stats", index=False)
+        (pd.DataFrame(web_leads) if web_leads else pd.DataFrame(columns=["Name", "Phone", "Email", "Type", "Message", "Submitted At (UTC)"])).to_excel(writer, sheet_name="Website Leads", index=False)
         df_queries.to_excel(writer, sheet_name="Customer Queries", index=False)
         df_leads.to_excel(writer, sheet_name="Customer Leads", index=False)
         df_enquiries.to_excel(writer, sheet_name="Service Enquiries", index=False)

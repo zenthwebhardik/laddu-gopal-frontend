@@ -2,6 +2,9 @@
 Authentication router — register & login with JWT.
 """
 
+import hmac
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -52,14 +55,20 @@ async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)):
     clean_email = payload.email.strip().lower()
     clean_password = payload.password.strip()
 
-    # Admin shortcut authorization check
-    if clean_email == settings.admin_email.lower() and clean_password == settings.admin_passcode:
-        token = create_access_token(data={"sub": settings.admin_email, "name": "Admin Administrator"})
+    # Admin login: credentials come only from the server's .env (ADMIN_EMAIL / ADMIN_PASSCODE).
+    admin_configured = bool(settings.admin_email and settings.admin_passcode)
+    if (
+        admin_configured
+        and hmac.compare_digest(clean_email, settings.admin_email.strip().lower())
+        and hmac.compare_digest(clean_password, settings.admin_passcode)
+    ):
+        token = create_access_token(data={"sub": settings.admin_email, "name": "Admin", "role": "admin"})
         admin_user = UserResponse(
             id=1,
-            name="Admin Administrator",
+            name="Admin",
             email=settings.admin_email,
-            is_active=True
+            is_active=True,
+            created_at=datetime.now(timezone.utc),
         )
         return Token(access_token=token, user=admin_user)
 

@@ -49,6 +49,8 @@ async def lifespan(app: FastAPI):
 
             # Create all tables automatically if they don't exist
             await conn.run_sync(Base.metadata.create_all)
+            # Email became optional for leads (idempotent on Postgres).
+            await conn.execute(text("ALTER TABLE unique_users ALTER COLUMN email DROP NOT NULL"))
 
         logger.info("✅ PostgreSQL connected and tables initialized — server ready.")
     except Exception as e:
@@ -88,13 +90,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 # ── CORS Middleware ─────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",      # Vite dev server
-        "http://localhost:3000",      # Fallback dev port
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-        "https://laddugopalwelding.com",  # Future production domain
-    ],
+    allow_origins=[o.strip() for o in settings.cors_origins.split(",") if o.strip()],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

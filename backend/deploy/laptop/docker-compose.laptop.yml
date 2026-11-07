@@ -1,0 +1,78 @@
+# Laddu Gopal Enterprise — whole backend on this Windows laptop with Docker Desktop
+# (same pattern as CBP's backend/deploy/laptop, minus Redis/Celery/gate, which this app doesn't need).
+#
+#   cd backend\deploy\laptop
+#   copy .env.laptop.example .env        (fill it in — never commit .env)
+#   .\lg.ps1 up                           (or: docker compose -f docker-compose.laptop.yml up -d --build)
+#
+# Services: postgres, api. Optional: cloudflared (Cloudflare Tunnel) with  .\lg.ps1 up -Tunnel
+#
+# Ports (chosen so nothing clashes with CBP: 5433 / 8001 / 8002, or the app on 8000):
+#   API       http://127.0.0.1:8010   (docs: /docs)
+#   Postgres  127.0.0.1:5434          (pgAdmin / psql from this laptop only)
+# Both bind to 127.0.0.1: nothing is reachable from outside except through the tunnel.
+name: lg-laptop
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "5" }
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lg_laptop_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB in .env}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+      start_interval: 1s
+    stop_grace_period: 60s
+    logging: *logging
+
+  api:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    image: lg-backend:laptop
+    container_name: lg_laptop_api
+    restart: unless-stopped
+    env_file: [.env]
+    environment:
+      # Fixed to the compose service name so a stray value in .env can't point elsewhere
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      TZ: Asia/Kolkata
+    ports:
+      - "127.0.0.1:8010:8000"
+    depends_on:
+      postgres: { condition: service_healthy }
+    logging: *logging
+
+  # Cloudflare Tunnel (optional): <your api hostname> → api:8000. Only starts with the "tunnel"
+  # profile (.\lg.ps1 up -Tunnel). Needs cloudflared\config.yml + cloudflared\credentials.json
+  # (see LAPTOP.md; credentials are git-ignored).
+  cloudflared:
+    image: cloudflare/cloudflared:2025.8.1
+    container_name: lg_laptop_cloudflared
+    restart: unless-stopped
+    profiles: [tunnel]
+    command: tunnel --no-autoupdate --config /etc/cloudflared/config.yml run
+    volumes:
+      - ./cloudflared/config.yml:/etc/cloudflared/config.yml:ro
+      - ./cloudflared/credentials.json:/etc/cloudflared/credentials.json:ro
+    depends_on:
+      api: { condition: service_healthy }
+    logging: *logging
+
+volumes:
+  pg_data:

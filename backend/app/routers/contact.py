@@ -14,21 +14,21 @@ POST /api/v1/contact
 import logging
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, BackgroundTasks, status, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, or_
 
 from ..models.inquiry import InquiryCreate, InquiryResponse
 from ..models.db import UniqueUser, Inquiry
 from ..database import get_db
-from ..services.whatsapp_service import send_inquiry_whatsapp_notification
+from ..services.email_service import send_lead_email
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/contact", tags=["Contact"])
 
 
 @router.post("/", response_model=InquiryResponse, status_code=status.HTTP_201_CREATED)
-async def create_contact(payload: InquiryCreate, db: AsyncSession = Depends(get_db)):
+async def create_contact(payload: InquiryCreate, background_tasks: BackgroundTasks, db: AsyncSession = Depends(get_db)):
     """
     Save a 'Contact Us' submission and send an instant WhatsApp alert to the admin.
     If the visitor already exists (matched by email OR phone), the inquiry is linked
@@ -36,20 +36,22 @@ async def create_contact(payload: InquiryCreate, db: AsyncSession = Depends(get_
     """
 
     # ── 1. Deduplication: find existing user by email OR phone ────────────
+    email = str(payload.email).lower() if payload.email else None
+    match = UniqueUser.phone == payload.phone
+    if email:
+        match = or_(match, UniqueUser.email == email)
+    # Phone match wins if email and phone point at two different records.
     result = await db.execute(
-        select(UniqueUser).where(
-            or_(
-                UniqueUser.email == str(payload.email),
-                UniqueUser.phone == payload.phone,
-            )
-        )
+        select(UniqueUser).where(match).order_by((UniqueUser.phone == payload.phone).desc())
     )
-    existing_user: UniqueUser | None = result.scalar_one_or_none()
+    existing_user: UniqueUser | None = result.scalars().first()
     is_new_user = existing_user is None
 
     if existing_user:
         # Update name and refresh updated_at timestamp
         existing_user.name = payload.name
+        if email and not existing_user.email:
+            existing_user.email = email
         existing_user.updated_at = datetime.now(timezone.utc)
         db.add(existing_user)
         logger.info(
@@ -63,7 +65,7 @@ async def create_contact(payload: InquiryCreate, db: AsyncSession = Depends(get_
         # Create a new canonical user record
         unique_user = UniqueUser(
             name=payload.name,
-            email=str(payload.email),
+            email=email,
             phone=payload.phone,
         )
         db.add(unique_user)
@@ -90,13 +92,15 @@ async def create_contact(payload: InquiryCreate, db: AsyncSession = Depends(get_
         unique_user.id,
     )
 
-    # ── 3. Instant WhatsApp notification to admin ─────────────────────────
-    wa_sent = send_inquiry_whatsapp_notification(
-        inquiry_type="CONTACT_US",
-        user_name=payload.name,
-        user_email=str(payload.email),
-        user_phone=payload.phone,
-        user_message=payload.message,
+    # ── 3. Lead alert email to the owner (sent after the response, never blocks the form) ──
+    background_tasks.add_task(
+        send_lead_email,
+        source="CONTACT_US",
+        name=payload.name,
+        phone=payload.phone,
+        email=email,
+        message=payload.message,
+        is_new_user=is_new_user,
     )
 
     return InquiryResponse(
@@ -104,6 +108,6 @@ async def create_contact(payload: InquiryCreate, db: AsyncSession = Depends(get_
         user_id=unique_user.id,
         is_new_user=is_new_user,
         type="CONTACT_US",
-        whatsapp_sent=wa_sent,
+        whatsapp_sent=False,
         submitted_at=inquiry.submitted_at,
     )

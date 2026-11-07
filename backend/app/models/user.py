@@ -3,7 +3,7 @@ User models for registration, login, and JWT token responses.
 """
 
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 from ..validators import GmailOnly
 
@@ -16,8 +16,8 @@ class UserCreate(BaseModel):
 
 
 class UserLogin(BaseModel):
-    """Payload for POST /auth/login."""
-    email: GmailOnly
+    """Payload for POST /auth/login. Any valid email (admin email need not be Gmail)."""
+    email: EmailStr
     password: str
 
 

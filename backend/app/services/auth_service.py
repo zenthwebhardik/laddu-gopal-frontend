@@ -66,3 +66,13 @@ async def get_current_user(
             detail="Token payload missing 'sub' claim",
         )
     return email
+
+
+async def require_admin(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+) -> str:
+    """FastAPI dependency: only tokens issued by the admin login pass."""
+    payload = decode_access_token(credentials.credentials)
+    if payload.get("role") != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+    return payload.get("sub", "")
